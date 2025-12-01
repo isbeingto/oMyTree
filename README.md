@@ -1,59 +1,72 @@
 # oMyTree
+
 An AI system that transforms conversations into structured knowledge trees.
 
 ---
 
 ## Overview
 
-**oMyTree** is an experimental system for converting unstructured conversations into
-structured knowledge trees.
+oMyTree is a tool for turning long, messy conversations into clear, navigable trees of ideas.
 
-Instead of treating dialogue as a linear stream, oMyTree models each conversation as a
-growing structure where topics branch, ideas evolve, and meaning accumulates.
+Instead of scrolling through an endless chat log, you can:
 
-The goal is to provide a clearer way to organize, revisit, and understand long-form
-interactions with AI systems.
+- see how a topic develops step by step  
+- branch off when a new sub-question appears  
+- return to any point in the discussion and continue from there  
+- review what you have actually learned, not just what was said  
 
----
-
-## Motivation
-
-As AI systems become stronger, conversations become longer and more complex.
-However, the interface to interact with them has not fundamentally changed.
-
-Long conversations often result in:
-- context fragmentation  
-- loss of important reasoning paths  
-- poor navigability  
-- difficulty in reviewing previous insights  
-
-oMyTree addresses these issues by restructuring conversation logs into a tree model
-that better reflects how users think and explore ideas.
+The goal is not to replace thinking, but to make the structure of thinking visible.
 
 ---
 
-## Core Concept
+## What this repository is
 
-oMyTree treats a conversation as:
+This repository is **not** the main source code of oMyTree.
 
-- nodes: individual turns or semantic units  
-- edges: relationships between ideas  
-- branches: topic divergence  
-- roots: core questions or goals  
+It serves as a public entry point for the project, and will host:
 
-Over time, a single chat evolves into a navigable knowledge structure instead of an
-unstructured message stream.
+- high-level documentation and design notes  
+- roadmaps and development logs  
+- links to demos, papers and related materials  
+
+The production codebase lives in a separate private repository.
 
 ---
 
-## Project Status
+## Live product
 
-This project is under active development.
+For the live product experience and updates, visit:
 
-Documentation and technical details will be gradually published in this repository.
+**Official website:**  
+https://www.omytree.com
+
+If the product is in closed testing, the website will announce when public access is available.
+
+---
+
+## About the project
+
+oMyTree is an independent project built and maintained by a solo developer.
+
+The focus is on:
+
+- helping people keep clarity in long AI-assisted conversations  
+- organizing knowledge as trees instead of flat histories  
+- providing a structural view of how ideas evolve over time  
+
+---
+
+## Contact
+
+For collaboration, questions or press:
+
+- Email: **isbeingto@gmail.com**
+
+(Replace this line with your actual contact address or preferred channel.)
 
 ---
 
 ## License
 
-MIT License
+This repository is released under the MIT License.  
+See the `LICENSE` file for details.
