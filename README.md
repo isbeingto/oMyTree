@@ -13,7 +13,7 @@
 ![focus-node](/image/lovegif_1765269135055.gif)
 
 ### 🔁 3. Other minor features 
-![branching](/image/lovegif_1765268298052.gif)
+![branching](/image/lovegif_1765268453544.gif)
 
 ---
 
