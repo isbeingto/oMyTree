@@ -1,229 +1,232 @@
-# oMyTree · Conversation → Tree
+# oMyTree
 
-oMyTree is an independent developer project that turns long AI chats into structured trees of thought.
+> A visual conversation tree for AI chats — see your thinking, not just your scroll.
 
-Instead of one endless scroll of messages, every question becomes a node and every follow-up grows a branch.  
-You can replay how you got to a conclusion, branch safely from any point, and export or share the whole structure.
+---
 
-- Live app: https://www.omytree.com  
-- Status: Public beta 
+## 🔥 Quick demo (GIFs first)
+
+### 🌳 1. Conversation grows as a tree  
+![conversation-tree](/image/lovegif_1765267999625.gif)
+
+### 🌿 2. Real-time growth 
+![focus-node](/image/lovegif_1765269135055.gif)
+
+### 🔁 3. Other minor features 
+![branching](/image/lovegif_1765268298052.gif)
 
 ---
 
 ## 1. What is oMyTree?
 
-Most AI tools are built around a single, flat chat log:
+oMyTree is a web app that turns your AI chats into a **visual conversation tree**.
 
-- Context is hidden in the scrollback.
-- Side explorations and the main line of thought are mixed together.
-- Revisiting “how did we get here?” is difficult.
-- Sharing what you learned is just a screenshot or a raw transcript.
+Each message becomes a node.  
+Each follow-up question grows a new branch.  
+You can jump between branches, revisit any path, and actually *see* how your thinking evolves.
 
-oMyTree treats every long AI session as a **tree**:
+This is **not** a “knowledge tree” or curated mind map.  
+It’s the raw conversation, mapped into a structure that’s easier to explore than an endless chat window.
 
-- The first question becomes the **root**.
-- Each follow-up from that point grows a **child node**.
-- Branching from any earlier node is explicit and visible.
-- You always know whether you are on the main trunk or on a side branch.
+- 🌱 One question = one node  
+- 🌿 Follow-up = a branching path  
+- 🌳 Whole conversation = a living tree you can navigate  
 
-The goal is not to be “yet another chat UI”, but to be a **structure layer** on top of large language models:
-a place where your thinking path is visible, navigable, and replayable.
-
----
-
-## 2. Who is building this?
-
-oMyTree is built and maintained by a single independent developer, with AI tools as collaborators rather than black boxes.
-
-- No large company behind it.
-- No big VC funding.
-- Just a long-term attempt to answer a simple question:
-
-> If we keep using AI to think, how do we keep track of how our thinking evolves?
-
-I use multiple AI agents (including ChatGPT) as “co-workers” for coding, testing, and design, but the product decisions, architecture, and direction are owned and curated by one person.
-
-If you want to talk, collaborate, or just say hi:
-
-- Founder: **isbeingto**  
-- Email (personal): **isbeingto@gmail.com**  
-- Email (general): **contact@omytree.com**  
-- X (Twitter): **https://x.com/omytree**
+Live app: **https://www.omytree.com**  
+Start a new tree: **https://www.omytree.com/app?new=1**
 
 ---
 
-## 3. Core Concepts
+## 2. Why I built this (the pain behind oMyTree)
 
-### 3.1 Tree-based conversations
+Two years ago, when ChatGPT first launched, I was blown away – not because it could answer questions, but because it felt like we could finally *talk* to an AI.
 
-At the core of oMyTree is a simple idea:
+But the deeper I went, the more one problem kept coming back:
 
-- **One question → one node.**
-- **One tree → one main topic.**
+> **Linear chats completely break once ideas get complex.**
+
+- After 10–20 messages, I’d forget why a certain line of reasoning started.  
+- After dozens of replies, everything became an endless scroll.  
+- Valuable ideas were buried somewhere in the history, effectively lost.
+
+My brain was overloaded. The model got smarter,  
+but my *experience* of using it wasn’t getting better.
+
+So instead of asking for “better answers”, I started asking:
+
+> Maybe what’s broken is not the model, but the **interface**.
+
+oMyTree is my attempt to fix that:  
+by giving long AI conversations a **tree structure** instead of a flat chat log.
+
+---
+
+## 3. How it works
+
+At a high level:
+
+1. You start a conversation with an AI model (or your own API key).  
+2. Every time you ask a question, oMyTree creates a new node.  
+3. If you ask a follow-up based on a specific message, oMyTree grows a new branch from that node.  
+4. You can click any node to:
+   - see the full Q&A
+   - continue the conversation from there
+   - grow alternate branches of thought
+
+So instead of:
+
+> “Where did we ask about X?” → *scroll, scroll, scroll…*
+
+you get:
+
+> “We asked about X on that branch.” → *click the node and continue from there.*
+
+---
+
+## 4. What you can do with it
+
+Here are some concrete things oMyTree is good at:
+
+- **Learning a new concept**  
+  Explore definitions on one branch, examples on another, and counter-arguments on a third.  
+  You keep all branches visible instead of losing them in history.
+
+- **Researching a topic**  
+  Keep separate branches for “background reading”, “data points”, “criticism”, “implementation steps”, etc.
+
+- **Debugging & refactoring**  
+  One branch for the failing assumption, one for the fix, one for an alternative design.
+
+- **Planning & writing**  
+  Use branches for different outlines, drafts, or styles, without merging them into one messy thread.
+
+It’s basically a map of “how you and the model got here”.
+
+---
+
+## 5. Key features (current)
+
+Some things that are already working today:
+
+- **Visual conversation tree**  
+  – One node per message, one branch per follow-up.  
+  – Click any node to focus that sub-conversation.
+
+- **Node-level follow-ups**  
+  – Ask further questions from *any* previous node, not just the latest reply.  
+  – Perfect for going deeper without losing alternate paths.
+
+- **Model switching with context**  
+  – Use different models (including your own API key) in the same tree.  
+  – Light models for quick questions, stronger ones for deep reasoning.
+
+- **Adjustable memory scope (still evolving)**  
+  – The idea is to switch between “full-tree context” and “branch-only context”.  
+  – This is under active iteration and may change as we refine the UX.
+
+- **Export & share**  
+  – Export your tree so it’s not locked inside a black box.  
+  – Share a tree with others so they can *see* the path you took.
+
+- **Reply collection**  
+  – Mark particularly valuable AI responses to revisit later.
+
+_(Some of these are still being refined – see Roadmap below.)_
+
+---
+
+## 6. How this is different from chat history / mind maps / note apps
+
+- It’s **not** a regular chat window  
+  – Chat UIs are great for short Q&A, but terrible for long-term reasoning.  
+  – oMyTree makes the structure of the conversation first-class.
+
+- It’s **not** a mind map tool  
+  – You don’t manually drag bubbles and draw arrows.  
+  – The tree grows naturally from your real conversation with the model.
+
+- It’s **not** a note-taking tool (yet)  
+  – It’s focused on *live conversations* and the path they take, not on long-form writing.  
+  – But it can feed into your existing note system (via export).
+
+---
+
+## 7. Tech stack (for the curious)
+
+- Frontend: **Next.js**, React, Tailwind-style minimal UI  
+- Backend: **Node.js / Express-like** API layer  
+- Database: **PostgreSQL**  
+- Caching / rate limiting: **Redis**  
+- LLM layer:  
+  – Custom abstraction over providers (OpenAI, etc.)  
+  – Support for user-provided API keys (BYOK)
+
+The system started as a personal experiment and has evolved into a full web app with its own routing, event logging, and tree engine.
+
+---
+
+## 8. Closed-source (for now)
+
+Right now, the core codebase is **closed-source**.
+
+Reasons:
+
+- I’m still actively iterating on the core ideas and UX.  
+- I want to stabilize the architecture and security model before exposing internals.  
+- Maintaining an open-source repo properly (issues, PRs, docs) is a non-trivial commitment.
+
+This repo exists as:
+
+- a canonical home for docs, screenshots, and the public roadmap  
+- a place to discuss ideas, open issues, and share feedback  
+- a neutral landing page I can link from Hacker News, Product Hunt, etc.
+
+I’m open to making more of the system public over time if there’s enough interest and a clear way to do it responsibly.
+
+---
+
+## 9. Roadmap (short version)
+
+Some things I’m exploring next:
+
+- Better controls for **context scope** per branch  
+- Smarter ways to **summarize branches** and trees  
+- Richer **export formats** (for note apps / PKM systems)  
+- Collaboration modes (share a tree and continue growing it together)  
+- Possibly exposing an API so other tools can plug into the tree engine
+
+If you have thoughts on what should exist here, I’d genuinely love to hear them.
+
+---
+
+## 10. About the maker
+
+I am a soon-to-be-graduated university student in Asia., building oMyTree as a solo project.
+
+The origin story in one line:
+
+> I hit the limits of linear AI chats, got frustrated enough, and decided to build the interface I wished existed.
+
+On the Chinese internet I wrote a longer essay about the background and philosophy behind oMyTree (in Chinese):  
+https://zhuanlan.zhihu.com/p/1981665938895045740
+
+If you’re reading this from Hacker News or GitHub and you’ve ever felt “lost in the scroll” of AI chats,  
+oMyTree is basically me trying to fix that — first for myself, and now maybe for others too.
+
+---
+
+## 11. Feedback
+
+If you’re a developer, researcher, writer, or just someone who thinks a lot with AI:
+
+- Does this conversation-tree UI actually help you think more clearly?  
+- Where does it break for you?  
+- What’s missing for your workflow?
 
 You can:
 
-- Start from a root topic (for example: “Overview of the American Civil War”).
-- Ask follow-up questions that extend the main trunk.
-- At any node, branch off to explore a side question without losing the main path.
-- Return to any previous node and continue from there.
+- Open an issue in this repo  
+- Try the app: https://www.omytree.com  
+- Or just email me: `isbeingto@gmail.com`
 
-The tree becomes a living record of:
-
-- What you asked.
-- How the AI responded.
-- Where you changed direction.
-- How your understanding grew over time.
-
-### 3.2 Views and navigation
-
-oMyTree exposes two main perspectives:
-
-- **Path view**  
-  Show only the nodes from the root to the current node.  
-  This answers: “How did I get here?”
-
-- **Full tree view**  
-  Show the entire tree at once on the right-hand side.  
-  This answers: “What else did I explore? Where are the side branches?”
-
-You can click any node in the tree to:
-
-- Focus that node in the chat pane (replaying its path).
-- Continue asking new questions from that point.
-- See a consistent visual representation of the branch structure.
-
----
-
-## 4. Current Feature Set
-
-As of the current public beta, oMyTree includes:
-
-### 4.1 User accounts and auth
-
-- Email-based registration and login.
-- Email verification flow.
-- Password reset flow.
-- Basic account status management (active / inactive).
-
-### 4.2 Conversation and tree engine
-
-- Create and manage multiple trees (“My Trees” sidebar).
-- One tree per topic, with a clear root and branches.
-- Tree visualization panel:
-  - modern metro-like layout with a main trunk and branches,
-  - nodes grow upward from the root,
-  - smooth node expansion animation when a node becomes “active”.
-- Current node highlighting and automatic centering in the canvas.
-- Light and dark themes, with a dot-grid “engineering” background and subtle glow around the active node.
-
-### 4.3 Documentation system
-
-- `/docs` page on the public site.
-- Admin can create, edit, publish, and delete docs in Markdown via `/admin/docs`.
-- Published docs appear on `/docs` and are rendered with Markdown.
-
-### 4.4 LLM usage model
-
-- **Hosted models for free tier**  
-  The app provides built-in models for new users so they can try the tree experience without bringing their own keys.
-
-- **BYOK (Bring Your Own Key)**  
-  Users can attach their own LLM API keys (for example, OpenAI) in the settings.  
-  The app then uses those keys for that user’s trees.
-
-- The long-term vision is that oMyTree is **LLM-agnostic**: it does not try to “lock you” into one provider, but focuses on the tree engine and UX.
-
----
-
-## 5. Pricing and Philosophy (early beta)
-
-During the early public beta, the focus is:
-
-- Let people experience a different way of working with AI: **structured, visual, and revisitable**.
-- Keep the free tier generous enough for real learning sessions.
-- Allow power users to rely on their own API keys if they want more control or higher volume.
-
-Because this is an independent project:
-
-- There is no “infinite runway” to undercut large players on price.
-- The priority is to make the product genuinely useful and sustainable, not to win a race to the bottom.
-
-Expect pricing and quotas to evolve.  
-The guiding principle: **clarity and honesty**, not dark patterns.
-
----
-
-## 6. Architecture Overview (high level)
-
-The main production code lives in a private repository for now, but the architecture is roughly:
-
-- **Frontend**
-  - Next.js (App Router) with TypeScript.
-  - Tailwind CSS for styling.
-  - Framer Motion for subtle animations.
-  - A dedicated TreeCanvas component for rendering the conversation tree.
-
-- **Backend**
-  - Node.js API server.
-  - PostgreSQL as the primary database.
-  - Shell-based acceptance scripts and test suites to keep behavior consistent.
-
-- **LLM abstraction**
-  - A provider layer that knows how to talk to different model vendors.
-  - Configuration for free-tier hosted models + per-user BYOK profiles.
-
-This public repository is focused on:
-
-- The README (this file).
-- Whitepapers and conceptual docs.
-- Possibly API or developer docs in the future.
-
----
-
-## 7. Roadmap (high level)
-
-Short term:
-
-- Improve onboarding for first-time users.
-- Polish the tree UI further (lens, summaries, time-based replay).
-- Stabilize free-tier model usage and quotas.
-
-Medium term:
-
-- Better sharing:
-  - read-only public links,
-  - “embed tree in blog post” style integrations.
-- Team and classroom scenarios:
-  - shared trees,
-  - teaching workflows,
-  - review tools.
-
-Long term:
-
-- Expose the tree engine as an API or SDK.
-- Allow other tools to plug into oMyTree as a “thinking map layer” on top of their own chats.
-
----
-
-## 8. Contributing and Feedback
-
-Right now the core app is not open-sourced, but:
-
-- Feedback on the concept, UX, and docs is very welcome.
-- If you are interested in research collaborations (education, cognitive science, HCI, AI-assisted learning), please get in touch.
-- If you are a developer/designer interested in contributing to future versions, feel free to reach out as well.
-
-Contact:
-
-- Personal: **isbeingto@gmail.com**  
-- General: **contact@omytree.com**  
-- X (Twitter): **https://x.com/omytree**
-
----
-
-## 9. License
-
-This documentation repository is currently **all rights reserved** by the author.
-
-If you would like to quote, translate, or adapt parts of the README or future whitepaper, please contact the maintainer first.
+Thanks for reading, and for caring about better interfaces for thinking.
