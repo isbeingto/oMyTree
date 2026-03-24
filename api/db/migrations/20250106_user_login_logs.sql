@@ -1,0 +1,7 @@
+-- 20250106_user_login_logs.sql
+-- NOTE: This migration depends on the users table, which is introduced later
+-- (20251121_add_users_table.sql). To ensure "from 0" migrations can be applied
+-- in lexicographic order, the actual migration has been moved to:
+--   20251206_user_login_logs.sql
+--
+-- This file is kept as a no-op placeholder.

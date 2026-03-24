@@ -1,0 +1,9 @@
+**/node_modules
+**/.next
+**/coverage
+**/.venv
+**/__pycache__
+**/*.log
+logs/
+data/
+.git

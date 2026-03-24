@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EventsReplayRequest",
+  "type": "object",
+  "required": ["treeId", "to"],
+  "properties": {
+    "treeId": { "type": "string" },
+    "to": { "type": "string", "description": "ISO timestamp of target event" }
+  }
+}

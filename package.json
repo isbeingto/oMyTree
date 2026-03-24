@@ -1,0 +1,19 @@
+{
+  "name": "omytree-root",
+  "private": true,
+  "packageManager": "pnpm@9.15.5",
+  "scripts": {
+    "build": "pnpm --filter omytree-web run build",
+    "gen:types": "pnpm --filter omytree-web run gen:types",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "framer-motion": "^12.26.2",
+    "lucide-react": "^0.562.0",
+    "mitt": "^3.0.1",
+    "reactflow": "^11.11.4"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0"
+  }
+}

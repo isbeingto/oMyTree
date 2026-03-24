@@ -1,0 +1,122 @@
+package router
+
+import (
+	"log"
+	"os"
+	"strconv"
+	"time"
+
+	"github.com/Tencent/WeKnora/internal/types"
+	"github.com/Tencent/WeKnora/internal/types/interfaces"
+	"github.com/hibiken/asynq"
+	"go.uber.org/dig"
+)
+
+type AsynqTaskParams struct {
+	dig.In
+
+	Server               *asynq.Server
+	KnowledgeService     interfaces.KnowledgeService
+	KnowledgeBaseService interfaces.KnowledgeBaseService
+	TagService           interfaces.KnowledgeTagService
+	ChunkExtracter       interfaces.TaskHandler `name:"chunkExtracter"`
+	DataTableSummary     interfaces.TaskHandler `name:"dataTableSummary"`
+}
+
+func getAsynqRedisClientOpt() *asynq.RedisClientOpt {
+	db := 0
+	if dbStr := os.Getenv("REDIS_DB"); dbStr != "" {
+		if parsed, err := strconv.Atoi(dbStr); err == nil {
+			db = parsed
+		}
+	}
+	opt := &asynq.RedisClientOpt{
+		Addr:         os.Getenv("REDIS_ADDR"),
+		Password:     os.Getenv("REDIS_PASSWORD"),
+		ReadTimeout:  100 * time.Millisecond,
+		WriteTimeout: 200 * time.Millisecond,
+		DB:           db,
+	}
+	return opt
+}
+
+func NewAsyncqClient() (*asynq.Client, error) {
+	opt := getAsynqRedisClientOpt()
+	client := asynq.NewClient(opt)
+	err := client.Ping()
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+func NewAsynqServer() *asynq.Server {
+	opt := getAsynqRedisClientOpt()
+
+	// Get concurrency from environment variable, default to 1 for memory safety
+	// This limits how many document processing tasks run in parallel
+	// to prevent OOM when multiple large files are uploaded simultaneously
+	concurrency := 1
+	if envConcurrency := os.Getenv("ASYNQ_CONCURRENCY"); envConcurrency != "" {
+		if parsed, err := strconv.Atoi(envConcurrency); err == nil && parsed > 0 {
+			concurrency = parsed
+		}
+	}
+
+	srv := asynq.NewServer(
+		opt,
+		asynq.Config{
+			// CRITICAL: Limit concurrency to prevent OOM when processing multiple documents
+			// Each document processing task loads entire file content into memory
+			// With concurrency=1, files are processed serially (one at a time)
+			Concurrency: concurrency,
+			Queues: map[string]int{
+				"critical": 6, // Highest priority queue
+				"default":  3, // Default priority queue
+				"low":      1, // Lowest priority queue
+			},
+		},
+	)
+	return srv
+}
+
+func RunAsynqServer(params AsynqTaskParams) *asynq.ServeMux {
+	// Create a new mux and register all handlers
+	mux := asynq.NewServeMux()
+
+	// Register extract handlers - router will dispatch to appropriate handler
+	mux.HandleFunc(types.TypeChunkExtract, params.ChunkExtracter.Handle)
+	mux.HandleFunc(types.TypeDataTableSummary, params.DataTableSummary.Handle)
+
+	// Register document processing handler
+	mux.HandleFunc(types.TypeDocumentProcess, params.KnowledgeService.ProcessDocument)
+
+	// Register FAQ import handler (includes dry run mode)
+	mux.HandleFunc(types.TypeFAQImport, params.KnowledgeService.ProcessFAQImport)
+
+	// Register question generation handler
+	mux.HandleFunc(types.TypeQuestionGeneration, params.KnowledgeService.ProcessQuestionGeneration)
+
+	// Register summary generation handler
+	mux.HandleFunc(types.TypeSummaryGeneration, params.KnowledgeService.ProcessSummaryGeneration)
+
+	// Register KB clone handler
+	mux.HandleFunc(types.TypeKBClone, params.KnowledgeService.ProcessKBClone)
+
+	// Register knowledge list delete handler
+	mux.HandleFunc(types.TypeKnowledgeListDelete, params.KnowledgeService.ProcessKnowledgeListDelete)
+
+	// Register index delete handler
+	mux.HandleFunc(types.TypeIndexDelete, params.TagService.ProcessIndexDelete)
+
+	// Register KB delete handler
+	mux.HandleFunc(types.TypeKBDelete, params.KnowledgeBaseService.ProcessKBDelete)
+
+	go func() {
+		// Start the server
+		if err := params.Server.Run(mux); err != nil {
+			log.Fatalf("could not run server: %v", err)
+		}
+	}()
+	return mux
+}

@@ -1,0 +1,228 @@
+// Package chatpipline provides chat pipeline processing capabilities
+// Including query rewriting, history processing, model invocation and other features
+package chatpipline
+
+import (
+	"context"
+	"regexp"
+	"slices"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/Tencent/WeKnora/internal/config"
+	"github.com/Tencent/WeKnora/internal/models/chat"
+	"github.com/Tencent/WeKnora/internal/types"
+	"github.com/Tencent/WeKnora/internal/types/interfaces"
+)
+
+// PluginRewrite is a plugin for rewriting user queries
+// It uses historical dialog context and large language models to optimize the user's original query
+type PluginRewrite struct {
+	modelService   interfaces.ModelService   // Model service for calling large language models
+	messageService interfaces.MessageService // Message service for retrieving historical messages
+	config         *config.Config            // System configuration
+}
+
+// reg is a regular expression used to match and remove content between <think></think> tags
+var reg = regexp.MustCompile(`(?s)<think>.*?</think>`)
+
+// NewPluginRewrite creates a new query rewriting plugin instance
+// Also registers the plugin with the event manager
+func NewPluginRewrite(eventManager *EventManager,
+	modelService interfaces.ModelService, messageService interfaces.MessageService,
+	config *config.Config,
+) *PluginRewrite {
+	res := &PluginRewrite{
+		modelService:   modelService,
+		messageService: messageService,
+		config:         config,
+	}
+	eventManager.Register(res)
+	return res
+}
+
+// ActivationEvents returns the list of event types this plugin responds to
+// This plugin only responds to REWRITE_QUERY events
+func (p *PluginRewrite) ActivationEvents() []types.EventType {
+	return []types.EventType{types.REWRITE_QUERY}
+}
+
+// OnEvent processes triggered events
+// When receiving a REWRITE_QUERY event, it rewrites the user query using conversation history and the language model
+func (p *PluginRewrite) OnEvent(ctx context.Context,
+	eventType types.EventType, chatManage *types.ChatManage, next func() *PluginError,
+) *PluginError {
+	// Initialize rewritten query as original query
+	chatManage.RewriteQuery = chatManage.Query
+
+	if !chatManage.EnableRewrite {
+		pipelineInfo(ctx, "Rewrite", "skip", map[string]interface{}{
+			"session_id": chatManage.SessionID,
+			"reason":     "rewrite_disabled",
+		})
+		return next()
+	}
+
+	pipelineInfo(ctx, "Rewrite", "input", map[string]interface{}{
+		"session_id":     chatManage.SessionID,
+		"tenant_id":      chatManage.TenantID,
+		"user_query":     chatManage.Query,
+		"enable_rewrite": chatManage.EnableRewrite,
+	})
+
+	// Get conversation history
+	history, err := p.messageService.GetRecentMessagesBySession(ctx, chatManage.SessionID, 20)
+	if err != nil {
+		pipelineWarn(ctx, "Rewrite", "history_fetch", map[string]interface{}{
+			"session_id": chatManage.SessionID,
+			"error":      err.Error(),
+		})
+	}
+
+	// Convert historical messages to conversation history structure
+	historyMap := make(map[string]*types.History)
+
+	// Process historical messages, grouped by requestID
+	for _, message := range history {
+		history, ok := historyMap[message.RequestID]
+		if !ok {
+			history = &types.History{}
+		}
+		if message.Role == "user" {
+			// User message as query
+			history.Query = message.Content
+			history.CreateAt = message.CreatedAt
+		} else {
+			// System message as answer, while removing thinking process
+			history.Answer = reg.ReplaceAllString(message.Content, "")
+			history.KnowledgeReferences = message.KnowledgeReferences
+		}
+		historyMap[message.RequestID] = history
+	}
+
+	// Convert to list and filter incomplete conversations
+	historyList := make([]*types.History, 0)
+	for _, history := range historyMap {
+		if history.Answer != "" && history.Query != "" {
+			historyList = append(historyList, history)
+		}
+	}
+
+	// Sort by time, keep the most recent conversations
+	sort.Slice(historyList, func(i, j int) bool {
+		return historyList[i].CreateAt.After(historyList[j].CreateAt)
+	})
+
+	// Limit the number of historical records
+	maxRounds := p.config.Conversation.MaxRounds
+	if chatManage.MaxRounds > 0 {
+		maxRounds = chatManage.MaxRounds
+	}
+	if len(historyList) > maxRounds {
+		historyList = historyList[:maxRounds]
+	}
+
+	// Reverse to chronological order
+	slices.Reverse(historyList)
+	chatManage.History = historyList
+	if len(historyList) == 0 {
+		pipelineInfo(ctx, "Rewrite", "skip", map[string]interface{}{
+			"session_id": chatManage.SessionID,
+			"reason":     "empty_history",
+		})
+		return next()
+	}
+	pipelineInfo(ctx, "Rewrite", "history_ready", map[string]interface{}{
+		"session_id":     chatManage.SessionID,
+		"history_rounds": len(historyList),
+		"max_rounds":     maxRounds,
+	})
+
+	userPrompt := p.config.Conversation.RewritePromptUser
+	if chatManage.RewritePromptUser != "" {
+		userPrompt = chatManage.RewritePromptUser
+	}
+	systemPrompt := p.config.Conversation.RewritePromptSystem
+	if chatManage.RewritePromptSystem != "" {
+		systemPrompt = chatManage.RewritePromptSystem
+	}
+
+	// Format conversation history for template
+	conversationText := formatConversationHistory(historyList)
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+	yesterday := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+
+	// Replace placeholders in prompts
+	userContent := strings.ReplaceAll(userPrompt, "{{conversation}}", conversationText)
+	userContent = strings.ReplaceAll(userContent, "{{query}}", chatManage.Query)
+	userContent = strings.ReplaceAll(userContent, "{{current_time}}", currentTime)
+	userContent = strings.ReplaceAll(userContent, "{{yesterday}}", yesterday)
+
+	systemContent := strings.ReplaceAll(systemPrompt, "{{conversation}}", conversationText)
+	systemContent = strings.ReplaceAll(systemContent, "{{query}}", chatManage.Query)
+	systemContent = strings.ReplaceAll(systemContent, "{{current_time}}", currentTime)
+	systemContent = strings.ReplaceAll(systemContent, "{{yesterday}}", yesterday)
+
+	rewriteModel, err := p.modelService.GetChatModel(ctx, chatManage.ChatModelID)
+	if err != nil {
+		pipelineError(ctx, "Rewrite", "get_model", map[string]interface{}{
+			"session_id":    chatManage.SessionID,
+			"chat_model_id": chatManage.ChatModelID,
+			"error":         err.Error(),
+		})
+		return next()
+	}
+
+	// Call model to rewrite query
+	thinking := false
+	response, err := rewriteModel.Chat(ctx, []chat.Message{
+		{
+			Role:    "system",
+			Content: systemContent,
+		},
+		{
+			Role:    "user",
+			Content: userContent,
+		},
+	}, &chat.ChatOptions{
+		Temperature:         0.3,
+		MaxCompletionTokens: 50,
+		Thinking:            &thinking,
+	})
+	if err != nil {
+		pipelineError(ctx, "Rewrite", "model_call", map[string]interface{}{
+			"session_id": chatManage.SessionID,
+			"error":      err.Error(),
+		})
+		return next()
+	}
+
+	if response.Content != "" {
+		// Update rewritten query
+		chatManage.RewriteQuery = response.Content
+	}
+	pipelineInfo(ctx, "Rewrite", "output", map[string]interface{}{
+		"session_id":    chatManage.SessionID,
+		"rewrite_query": chatManage.RewriteQuery,
+	})
+	return next()
+}
+
+// formatConversationHistory formats conversation history for prompt template
+func formatConversationHistory(historyList []*types.History) string {
+	if len(historyList) == 0 {
+		return ""
+	}
+
+	var builder strings.Builder
+	for _, h := range historyList {
+		builder.WriteString("------BEGIN------\n")
+		builder.WriteString("用户的问题是：")
+		builder.WriteString(h.Query)
+		builder.WriteString("\n助手的回答是：")
+		builder.WriteString(h.Answer)
+		builder.WriteString("\n------END------\n")
+	}
+	return builder.String()
+}

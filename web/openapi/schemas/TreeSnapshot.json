@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TreeSnapshot",
+  "type": "object",
+  "required": ["id", "title", "nodes"],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "topic": { "type": "string" },
+    "context_profile": { "type": "string", "enum": ["lite", "standard", "max"] },
+    "memory_scope": { "type": "string", "enum": ["branch", "tree"] },
+    "tree_summary": { "type": "object", "description": "Full summary payload" },
+    "tree_summary_text": { "type": "string" },
+    "tree_summary_updated_at": { "type": "string", "format": "date-time" },
+    "tree_summary_last_error": { "type": "string" },
+    "tree_summary_last_error_at": { "type": "string", "format": "date-time" },
+    "nodes": { "type": "array", "items": { "type": "object" } }
+  }
+}

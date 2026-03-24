@@ -1,0 +1,28 @@
+# oMyTree
+
+> oMyTree is a writing and thinking workspace for structured dialogue, tree-based reasoning, and collaborative knowledge building.
+
+Use this file as the entry point for high-signal public information. Prefer policy and docs pages for authoritative statements. Authenticated product surfaces are not public reference material.
+
+## Primary
+
+- [Home](https://www.omytree.com/): Product overview and main navigation.
+- [About](https://www.omytree.com/about): Company and mission context.
+- [Pricing](https://www.omytree.com/pricing): Plan and billing overview.
+- [Documentation](https://www.omytree.com/docs): Product docs index.
+- [Changelog](https://www.omytree.com/changelog): Release history and updates.
+
+## Policies
+
+- [Privacy Policy](https://www.omytree.com/privacy): Data handling and privacy terms.
+- [Terms of Service](https://www.omytree.com/terms): Legal terms for service usage.
+- [Refund Policy](https://www.omytree.com/refund): Payment and refund conditions.
+
+## Localized
+
+- [中文首页](https://www.omytree.com/zh-Hans-CN): Chinese localized landing page.
+
+## Optional
+
+- [Login](https://www.omytree.com/auth/login): Authentication entry point (session-gated flows).
+- [App](https://www.omytree.com/app): Authenticated workspace (not generally crawlable public content).

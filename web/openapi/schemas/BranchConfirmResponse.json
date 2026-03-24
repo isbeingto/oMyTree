@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BranchConfirmResponse",
+  "type": "object",
+  "required": ["ok", "trace_id"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "trace_id": { "type": "string" },
+    "new_node": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "parent_id": { "type": ["string", "null"] },
+        "title": { "type": "string" },
+        "status": { "type": "string", "enum": ["confirmed"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
+var/
+infra/nginx/
+infra/pm2/
+
+# === Sensitive config (production secrets) ===
+ecosystem.config.js
+
+# === local runtime & environment ===
+.bash_history
+.cache/
+.dotnet/
+.gitconfig
+.leshhst
+.lesshst
+.local/
+.npm/
+.pm2/
+.ssh/
+.sudo_as_admin_successful
+.vscode-server/
+.wget-hsts
+*.log
+logs/
+!web/app/admin/logs/
+!web/app/admin/logs/page.tsx
+npm-debug.log*
+pnpm-debug.log*
+# === Sensitive files & backups ===
+database/backup/
+infra/backup/*.sql
+infra/backup/ssh_
+
+# === Runtime data (local development & testing) ===
+data/qdrant/
+data/weknora/
+data/weaviate/*
+infra/backup/.env.*
+infra/secrets/
+*.pem
+*.key
+.env.production
+test-results/data/
+
+# === IDE ===
+.idea/
+*.swp
+*.swo
+.DS_Store

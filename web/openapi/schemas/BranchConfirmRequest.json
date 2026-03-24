@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BranchConfirmRequest",
+  "type": "object",
+  "required": ["candidate_id", "action"],
+  "properties": {
+    "candidate_id": { "type": "string" },
+    "action": { "type": "string", "enum": ["accept", "reject"] }
+  }
+}

@@ -1,0 +1,683 @@
+@import "./tokens.css";
+@import "katex/dist/katex.min.css";
+
+@config "../tailwind.config.js";
+
+@import "tailwindcss";
+
+/* Tailwind v4 已内置 `backdrop-blur-*` 与 `backdrop-*` 系列工具类。
+   这里不再手写重复的 `@utility backdrop-blur-*`，避免与框架产物/优化冲突。 */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    /* NOTE: Do NOT use scroll-behavior: smooth here!
+     * It limits scrolling to 60fps on high-refresh-rate devices (120Hz, 90Hz).
+     * Use JS-based smooth scrolling when needed for better control.
+     * Mobile Safari fixes */
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:focus:not(:focus-visible),
+  a:focus:not(:focus-visible),
+  [role="button"]:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased transition-colors duration-300;
+    font-family: var(--font-sans, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  }
+
+  html.app-shell,
+  body.app-shell {
+    height: var(--app-height, 100dvh);
+    overflow: hidden;
+    overscroll-behavior-y: none;
+  }
+
+  body.app-shell {
+    position: relative;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+}
+
+/* On touch devices, Safari may keep :hover styles "stuck" after tapping.
+   Disable hover backgrounds for interactive elements to avoid lingering highlight colors.
+   Exclude role="switch" elements as they use data-state for background styling. */
+@media (hover: none) and (pointer: coarse) {
+  button:not([role="switch"]):hover,
+  a:hover,
+  [role="button"]:not([role="switch"]):hover {
+    background-color: transparent !important;
+  }
+}
+
+/* ============================================================
+ * Landing Page - Flowing Mind Design System
+ * ============================================================ */
+
+:root {
+  --color-brand-light: #059669;
+  /* emerald-600 */
+  --color-brand-dark: #34D399;
+  /* emerald-400 */
+  --dot-color: #e5e7eb;
+  /* light mode grid lines */
+  --dot-color-rgb: 229, 231, 235;
+  /* Single global font scheme: rounded Latin + explicit CJK webfont */
+  --font-sans: var(--font-jakarta), var(--font-noto-sc), "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+
+.dark {
+  --dot-color: #1e293b;
+  /* dark mode grid lines */
+  --dot-color-rgb: 30, 41, 59;
+}
+
+@layer utilities {
+  .bg-dot-grid {
+    background-image:
+      linear-gradient(to right, var(--dot-color) 0.8px, transparent 0.8px),
+      linear-gradient(to bottom, var(--dot-color) 0.8px, transparent 0.8px);
+    background-size: 40px 40px;
+  }
+
+  .bg-dot-grid-masked {
+    background-image:
+      linear-gradient(to right, var(--dot-color) 0.8px, transparent 0.8px),
+      linear-gradient(to bottom, var(--dot-color) 0.8px, transparent 0.8px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 68% 56% at center, black 62%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 68% 56% at center, black 62%, transparent 100%);
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  @keyframes scan {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(200%);
+    }
+  }
+
+  /* Safari-safe hero animations: keep opacity at 1 so content is always visible
+     even if animation runtime fails. */
+  @keyframes hero-rise {
+    from {
+      transform: translateY(28px);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes hero-pop {
+    from {
+      transform: scale(0.92);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes hero-underline {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .glass-card {
+    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(24px);
+    @apply bg-white/70 dark:bg-slate-950/60 border border-white/20 dark:border-white/10 shadow-lg;
+  }
+
+  .glass-card-hover {
+    @apply hover:-translate-y-1 hover:shadow-xl hover:border-emerald-500/50 dark:hover:border-emerald-400/50 transition-all duration-300;
+  }
+
+  /* ============================================================
+   * oMyTree Hover Halo (mouse-follow)
+   * Used by Radix Select / DropdownMenu items via `omytree-hover-halo`.
+   * Shows a subtle emerald radial glow that follows the pointer.
+   * ============================================================ */
+  .omytree-hover-halo {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+
+    /* Default center so halo is visible even before pointermove sets vars */
+    --mx: 50%;
+    --my: 50%;
+  }
+
+  .omytree-hover-halo::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    z-index: 0;
+
+    opacity: 0;
+    transition: opacity 160ms ease-out, background 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    /* Increased radius (180px→240px) and stronger colors for better visibility */
+    background: radial-gradient(
+      240px circle at var(--mx) var(--my),
+      rgba(16, 185, 129, 0.28),
+      transparent 65%
+    );
+  }
+
+  /* When active (selected), expand halo to fill the element with centered gradient */
+  .omytree-hover-halo.is-active::before {
+    background: radial-gradient(
+      500px circle at 50% 50%,
+      rgba(16, 185, 129, 0.35),
+      transparent 75%
+    );
+  }
+
+  .dark .omytree-hover-halo::before {
+    background: radial-gradient(
+      240px circle at var(--mx) var(--my),
+      rgba(52, 211, 153, 0.32),
+      transparent 65%
+    );
+  }
+
+  /* Dark mode active state */
+  .dark .omytree-hover-halo.is-active::before {
+    background: radial-gradient(
+      500px circle at 50% 50%,
+      rgba(34, 197, 94, 0.32),
+      transparent 75%
+    );
+  }
+
+  /* Ensure content stays above the halo background */
+  .omytree-hover-halo {
+    z-index: 0;
+  }
+
+  .omytree-hover-halo:not(svg) {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Radix uses data-highlighted for hover/keyboard navigation */
+  .omytree-hover-halo:hover::before,
+  .omytree-hover-halo:focus::before,
+  .omytree-hover-halo:focus-visible::before,
+  .omytree-hover-halo[data-highlighted]::before,
+  .omytree-hover-halo[data-state="open"]::before,
+  .omytree-hover-halo.is-active::before {
+    opacity: 1;
+  }
+
+  /* Avoid iOS Safari :hover sticking on coarse pointers */
+  @media (hover: none) and (pointer: coarse) {
+    .omytree-hover-halo::before {
+      display: none;
+    }
+  }
+
+  /* ============================================================
+   * Streaming UI/UX - Smooth Reveal & Fade-in (Gemini-Style)
+   * Pure CSS approach: only the last direct child of the streaming
+   * container gets a fade-in. This avoids MutationObserver conflicts
+   * with React reconciliation that cause flickering.
+   * ============================================================ */
+
+    /* ============================================================
+     * KaTeX (Math) - Chat-friendly spacing
+     * ============================================================ */
+    .katex-display {
+      margin: 0.75rem 0;
+    }
+
+    /* Keep long formulas usable on narrow screens */
+    .katex-display > .katex {
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0.25rem 0;
+    }
+
+	  /* Smooth streaming text animation for the container */
+	  .streaming-text {
+	    position: relative;
+	  }
+
+	  /* Smooth container height transition - eliminate jerky jumps */
+	  .streaming-container {
+	    transition: height 0.15s cubic-bezier(0.2, 0, 0.2, 1);
+	    will-change: height, contents;
+	    position: relative;
+	    overflow-anchor: none;
+	  }
+
+	  /* Streaming markdown - no cursor indicator needed */
+
+	  /* ── Sidebar shimmer animation for tree-creating placeholder ── */
+	  @keyframes sidebarShimmer {
+	    0%, 100% { background-position: 200% 0; }
+	    50% { background-position: -200% 0; }
+	  }
+
+    /* ============================================================
+     * KaTeX in chat markdown (AI-style readability)
+     * ============================================================ */
+    .streaming-markdown .katex {
+      font-size: 1.02em;
+    }
+
+    .streaming-markdown .katex-display {
+      margin: 0.72em 0 0.92em;
+      padding: 0.06em 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .streaming-markdown .katex-display > .katex {
+      font-size: 1.08em;
+      line-height: 1.35;
+    }
+
+    .streaming-markdown .katex-error {
+      color: hsl(var(--foreground) / 0.75);
+      background: hsl(var(--muted) / 0.42);
+      border: 1px solid hsl(var(--border) / 0.6);
+      border-radius: 0.4rem;
+      padding: 0.08rem 0.3rem;
+      font-family: inherit;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+  /* ============================================================
+   * High Refresh Rate Scroll Optimization
+   * ============================================================ */
+  
+  /* Native scrolling optimization for all scrollable containers */
+  .scroll-native-hz {
+    /* Enable native momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Hint to browser about scroll position changes */
+    will-change: scroll-position;
+    /* Contain overscroll within the element */
+    overscroll-behavior: contain;
+    /* Enable GPU acceleration for scroll */
+    transform: translateZ(0);
+  }
+
+  /* High-refresh-rate optimized scrollable area */
+  [data-scroll-hz] {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: auto !important; /* Force native scrolling, not CSS smooth */
+  }
+
+  /* ============================================================
+   * Genesis View - Glassmorphism Effects
+   * ============================================================ */
+
+  /* Genesis shimmer light effect animation */
+  @keyframes genesis-shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Genesis glow pulse for ambient effect */
+  @keyframes genesis-glow-pulse {
+
+    0%,
+    100% {
+      opacity: 0.3;
+    }
+
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* Genesis glass capsule base styles */
+  .genesis-glass-capsule {
+    will-change: transform, opacity;
+  }
+
+  .genesis-glass-capsule-sm {
+    will-change: transform, opacity;
+  }
+
+  /* Dark mode overrides for Genesis glass effect */
+  .dark .genesis-glass-capsule {
+    background: rgba(15, 23, 42, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .dark .genesis-glass-capsule-sm {
+    background: rgba(15, 23, 42, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow:
+      0 4px 16px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* Shimmer effect in dark mode */
+  .dark .genesis-glass-capsule>div:first-child {
+    background: linear-gradient(105deg,
+        transparent 40%,
+        rgba(255, 255, 255, 0.08) 45%,
+        rgba(255, 255, 255, 0.12) 50%,
+        rgba(255, 255, 255, 0.08) 55%,
+        transparent 60%) !important;
+  }
+
+  /* ============================================================
+   * Custom Scrollbar Styles
+   * - Thin, minimal scrollbar
+   * - Auto-hide when not scrolling
+   * - Transparent background
+   * ============================================================ */
+
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border) / 1);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--border) / 1);
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border) / 1);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--border) / 1);
+  }
+
+  /* Hide scrollbar by default, show only when scrolling */
+  .scroll-auto-hide {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .scroll-auto-hide::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+
+  .scroll-auto-hide:hover::-webkit-scrollbar-thumb,
+  .scroll-auto-hide:active::-webkit-scrollbar-thumb {
+    background: hsl(var(--border) / 1);
+  }
+
+  .dark .scroll-auto-hide:hover::-webkit-scrollbar-thumb,
+  .dark .scroll-auto-hide:active::-webkit-scrollbar-thumb {
+    background: hsl(var(--border) / 1);
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border) / 1) transparent;
+  }
+
+  .dark * {
+    scrollbar-color: hsl(var(--border) / 1) transparent;
+  }
+}
+
+@keyframes progress-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(-30%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-progress-bar {
+  animation: progress-bar 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ============================================================
+ * reCAPTCHA Badge Hidden
+ * Google allows hiding the badge if you include the reCAPTCHA branding
+ * visibly in the user flow. See: https://developers.google.com/recaptcha/docs/faq
+ * The verify-email page includes the required text disclosure.
+ * ============================================================ */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ============================================================
+ * Glass System (Tailwind v4 `@utility`)
+ * - 避免使用 :is(...) 聚合选择器，确保每个 glass 类是“真正的 utility”。
+ * - 同时输出 `-webkit-backdrop-filter` 和标准 `backdrop-filter`（标准放最后）。
+ * - 保持现有用法：只写 `glass-*`，在 `.dark` 下自动适配，不要求在 JSX 里写 `dark:`。
+ * ============================================================ */
+
+@utility glass-filter {
+  -webkit-backdrop-filter: var(--glass-filter, blur(14px) saturate(120%));
+  backdrop-filter: var(--glass-filter, blur(14px) saturate(120%));
+}
+
+@utility glass-surface {
+  --glass-filter: blur(var(--glass-blur, 14px)) saturate(120%);
+  --glass-bg: 0.48;
+  --glass-border: 0.35;
+  --glass-shadow-1: 0 1px 2px hsl(var(--foreground) / 0.06);
+  --glass-shadow-2: 0 8px 20px hsl(var(--foreground) / 0.08);
+  --glass-shadow-inset: inset 0 1px 0 hsl(var(--background) / 0.65);
+
+  @apply glass-filter;
+
+  background-color: hsl(var(--background) / var(--glass-bg));
+  border: 1px solid hsl(var(--border) / var(--glass-border));
+  box-shadow: var(--glass-shadow-1), var(--glass-shadow-2), var(--glass-shadow-inset);
+
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
+  isolation: isolate;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+@utility glass-panel {
+  @apply glass-surface;
+  --glass-blur: 16px;
+  --glass-bg: 0.6;
+  --glass-border: 0.24;
+  --glass-bg-dark: 0.28;
+  --glass-border-dark: 0.16;
+  border-radius: 1rem;
+}
+
+@utility glass-panel-soft {
+  @apply glass-surface;
+  --glass-blur: 8px;
+  --glass-bg: 0.52;
+  --glass-border: 0.22;
+  --glass-bg-dark: 0.24;
+  --glass-border-dark: 0.14;
+  border-radius: 0.75rem;
+}
+
+@utility glass-panel-strong {
+  @apply glass-surface;
+  --glass-blur: 24px;
+  --glass-bg: 0.72;
+  --glass-border: 0.3;
+  --glass-bg-dark: 0.32;
+  --glass-border-dark: 0.18;
+  border-radius: 1rem;
+}
+
+@utility glass-dropdown {
+  @apply glass-surface;
+  --glass-blur: 24px;
+  --glass-bg: 0.68;
+  --glass-border: 0.26;
+  --glass-bg-dark: 0.28;
+  --glass-border-dark: 0.16;
+  border-radius: 0.75rem;
+}
+
+@utility glass-field {
+  @apply glass-surface;
+  --glass-blur: 8px;
+  --glass-bg: 0.52;
+  --glass-border: 0.22;
+  --glass-bg-dark: 0.24;
+  --glass-border-dark: 0.14;
+  border-radius: 0.75rem;
+  box-shadow: none;
+}
+
+@utility apple-glass {
+  @apply glass-surface;
+}
+
+@utility glass-capsule {
+  @apply glass-filter;
+  --glass-filter: blur(var(--apple-glass-blur, 14px)) saturate(120%);
+
+  background-color: hsl(var(--background) / 0.48);
+  border: 1px solid hsl(var(--border) / 0.35);
+
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
+  isolation: isolate;
+
+  border-radius: 2rem;
+  padding: 0.5rem 1rem;
+
+  border-top-color: hsl(var(--background) / 0.45);
+  box-shadow:
+    0 1px 3px hsl(var(--foreground) / 0.08),
+    0 6px 14px hsl(var(--foreground) / 0.06),
+    inset 0 1px 0 hsl(var(--background) / 0.55),
+    inset 0 -1px 0 hsl(var(--background) / 0.12);
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+@utility apple-glass-capsule {
+  @apply glass-capsule;
+}
+
+@utility glass-overlay {
+  -webkit-backdrop-filter: blur(4px) saturate(120%);
+  backdrop-filter: blur(4px) saturate(120%);
+  background-color: hsl(0 0% 0% / 0.2);
+}
+
+/* ============================================================
+ * Admin Dashboard Surface System
+ * Enterprise panel backdrop and ambient gradients
+ * ============================================================ */
+
+@utility admin-page-bg {
+  background-color: #f3f7f6;
+  background-image:
+    radial-gradient(circle at 6% -12%, rgba(16, 185, 129, 0.2), transparent 34%),
+    radial-gradient(circle at 98% 4%, rgba(56, 189, 248, 0.16), transparent 30%),
+    linear-gradient(180deg, #f9fcfb 0%, #edf2f7 100%);
+}
+
+.dark .admin-page-bg {
+  background-color: #050b0a;
+  background-image:
+    radial-gradient(circle at 8% -10%, rgba(16, 185, 129, 0.2), transparent 32%),
+    radial-gradient(circle at 96% 6%, rgba(59, 130, 246, 0.16), transparent 28%),
+    linear-gradient(180deg, #080f0d 0%, #020706 100%);
+}
+
+/* `.dark` 下的自动适配（保持现有用法，不要求写 `dark:`） */
+.dark :is(.apple-glass, .glass-panel, .glass-panel-soft, .glass-panel-strong, .glass-dropdown, .glass-field) {
+  background-color: hsl(var(--background) / var(--glass-bg-dark, 0.28));
+  border-color: hsl(var(--border) / var(--glass-border-dark, 0.16));
+  box-shadow:
+    0 10px 28px hsl(0 0% 0% / 0.42),
+    inset 0 1px 0 hsl(0 0% 100% / 0.12);
+}
+
+.dark :is(.apple-glass-capsule, .glass-capsule) {
+  background-color: hsl(var(--background) / 0.28);
+  border-color: hsl(var(--border) / 0.16);
+  border-top-color: hsl(0 0% 100% / 0.14);
+  box-shadow:
+    0 10px 28px hsl(0 0% 0% / 0.55),
+    inset 0 1px 0 hsl(0 0% 100% / 0.10),
+    inset 0 -1px 0 hsl(0 0% 100% / 0.05);
+}
+
+.dark .glass-overlay {
+  background-color: hsl(0 0% 0% / 0.4);
+}

@@ -1,0 +1,11 @@
+-- 20250104_plan_quota_update.sql
+-- NOTE: This migration is kept as a historical placeholder only.
+-- It used to update users.plan constraints and seed system_config.plan_limits,
+-- but the current schema handles plan constraints/limits in later migrations:
+-- - 20251201_t27_5_telemetry.sql (adds users.plan)
+-- - 20251212_t31_3_plan_limits.sql (plan constraints + plan_limits in system_config)
+--
+-- To guarantee "from 0" migrations can be applied in lexicographic order,
+-- this file must not assume users/system_config tables exist yet.
+--
+-- No-op.

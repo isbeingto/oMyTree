@@ -1,0 +1,6 @@
+# Docker runtime config for WeKnora
+# Keep production/bare-metal config in services/weknora/config/config.yaml.
+
+server:
+  port: 8081
+  host: "0.0.0.0"

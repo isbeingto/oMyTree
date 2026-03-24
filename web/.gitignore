@@ -1,0 +1,22 @@
+.next
+
+# build artifacts
+.next
+coverage/
+node_modules/
+out/
+dist/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Local env files (single source of truth is /srv/linzhi/ecosystem.config.js)
+.env*
+!.env.example
+
+# Logs / ad-hoc outputs
+nohup.out
+*.log
+
+# Uploaded files (images, videos, etc.)
+public/uploads/

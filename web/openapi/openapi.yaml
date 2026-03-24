@@ -1,0 +1,2031 @@
+openapi: 3.0.3
+info:
+  title: oMyTree API
+  version: 0.1.0
+  description: Minimal OpenAPI contract for oMyTree v0.1–0.3
+  x-omytree-api: "0.1.x"
+servers:
+  - url: http://127.0.0.1:8000
+paths:
+  /api/branch/suggest:
+    post:
+      summary: Generate candidate branches
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchSuggestRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchSuggestResponse'
+
+  /api/branch/confirm:
+    post:
+      summary: Confirm or reject candidate branch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchConfirmRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchConfirmResponse'
+
+  /api/tree/{id}:
+    get:
+      summary: Get tree snapshot
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreeSnapshot'
+
+  /api/node/{id}/edit-question/stream:
+    post:
+      summary: Edit a user question and stream the regenerated AI response
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new_text:
+                  type: string
+                provider:
+                  type: string
+                model:
+                  type: string
+                is_byok:
+                  type: boolean
+                upload_ids:
+                  type: array
+                  items:
+                    type: string
+              required: [new_text]
+      responses:
+        "200":
+          description: SSE stream of edit-question events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /api/events/replay:
+    post:
+      deprecated: true
+      summary: Replay events (used as Undo) - DEPRECATED
+      description: |
+        WARNING: This endpoint depends on legacy tree_event/tree_node tables which are not used in current dialogue flows. 
+        It is retained for backward compatibility with older tree versions but will not affect nodes/turns in modern trees.
+        Replacement for "Undo" functionality is pending.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventsReplayRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  reverted_to:
+                    type: string
+
+  /api/memo/history:
+    get:
+      summary: List memo checkpoints
+      parameters:
+        - name: tree_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: scope_node_id
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoHistoryResponse'
+
+  /api/memo/{memo_id}:
+    get:
+      summary: Get memo by id
+      parameters:
+        - name: memo_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoGetResponse'
+
+  /api/memo/latest:
+    get:
+      summary: Get latest memo
+      parameters:
+        - name: tree_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoLatestResponse'
+
+  /api/memo/generate:
+    post:
+      summary: Generate memo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoGenerateRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoGenerateResponse'
+
+  /api/outcomes/draft:
+    post:
+      summary: Generate or update an outcome outline draft from a resume snapshot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                snapshot_id:
+                  type: string
+                  description: Resume snapshot ID
+                outcome_type:
+                  type: string
+                  enum: [decision, brief, report]
+                  description: Outcome draft type (defaults to brief)
+              required: [snapshot_id]
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  draft:
+                    $ref: '#/components/schemas/OutcomeDraft'
+
+  /api/outcomes/{id}:
+    get:
+      summary: Get a specific outcome draft by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  draft:
+                    $ref: '#/components/schemas/OutcomeDraft'
+  /api/outcomes/{id}/refresh:
+    post:
+      summary: Refresh an outcome draft after evidence updates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  draft:
+                    $ref: '#/components/schemas/OutcomeDraft'
+                  stats:
+                    type: object
+                    properties:
+                      gapCountBefore:
+                        type: integer
+                      gapCountAfter:
+                        type: integer
+                      evidenceCount:
+                        type: integer
+                      evidenceLinks:
+                        type: integer
+                      ledgerAtoms:
+                        type: integer
+                      outlineSectionsBefore:
+                        type: integer
+                      outlineSectionsAfter:
+                        type: integer
+                      requirementsBefore:
+                        type: integer
+                      requirementsAfter:
+                        type: integer
+                      statusPreserved:
+                        type: integer
+                      statusRecomputed:
+                        type: integer
+                      sourcesUpdated:
+                        type: integer
+                      addedSections:
+                        type: integer
+                      mergeConflict:
+                        type: boolean
+                      mergeConflictKeys:
+                        type: array
+                        items:
+                          type: string
+
+  /api/outcomes/{id}/export.md:
+    get:
+      summary: Export an outcome draft as Markdown with references
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/markdown:
+              schema:
+                type: string
+
+  /api/trees/{treeId}/outcomes:
+    get:
+      summary: List outcome drafts for a tree
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: snapshot_id
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter drafts by snapshot ID
+        - name: outcome_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [decision, brief, report]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  drafts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OutcomeDraft'
+
+  /api/tree/{treeId}/outcomes:
+    get:
+      summary: List outcomes (v2) for a tree
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  outcomes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Outcome'
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+    post:
+      summary: Create an outcome (v2) anchored to a node
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutcomeCreateRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutcomeCreateResponse'
+
+  /api/tree/{treeId}/outcomes/preview:
+    post:
+      summary: Preview outcome (v2) title candidates without creating
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutcomePreviewRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutcomePreviewResponse'
+
+  /api/tree/{treeId}/outcomes/{id}:
+    get:
+      summary: Get outcome (v2) details
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutcomeDetailResponse'
+    patch:
+      summary: Update outcome (v2)
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutcomePatchRequest'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  outcome:
+                    $ref: '#/components/schemas/Outcome'
+    delete:
+      summary: Delete outcome (v2)
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+
+  /api/tree/{treeId}/outcomes/{id}/regenerate:
+    post:
+      summary: Regenerate outcome (v2) report_json
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutcomeRegenerateResponse'
+
+  /api/evidence:
+    post:
+      summary: Create an evidence item (url/text)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceCreateRequest'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  evidence:
+                    $ref: '#/components/schemas/EvidenceItem'
+
+  /api/evidence/upload:
+    post:
+      summary: Upload a file as evidence
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                tree_id:
+                  type: string
+                title:
+                  type: string
+                summary:
+                  type: string
+                tags:
+                  type: string
+                  description: JSON array string of tags
+                file:
+                  type: string
+                  format: binary
+              required: [tree_id, title, file]
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  evidence:
+                    $ref: '#/components/schemas/EvidenceItem'
+
+  /api/evidence/{id}:
+    get:
+      summary: Get evidence details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  evidence:
+                    $ref: '#/components/schemas/EvidenceItem'
+
+  /api/evidence/{id}/nodes:
+    get:
+      summary: List nodes attached to an evidence item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  nodes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EvidenceNodeLink'
+
+  /api/trees/{treeId}/evidence:
+    get:
+      summary: List evidence for a tree
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [url, file, text]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  evidence:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EvidenceItem'
+
+  /api/nodes/{id}/evidence/{evidenceId}:
+    post:
+      summary: Attach evidence to a node
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: evidenceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  created:
+                    type: boolean
+                  link:
+                    $ref: '#/components/schemas/NodeEvidenceLink'
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  created:
+                    type: boolean
+                  link:
+                    $ref: '#/components/schemas/NodeEvidenceLink'
+
+    delete:
+      summary: Detach evidence from a node
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: evidenceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  detached:
+                    type: boolean
+
+  /api/nodes/{id}/evidence:
+    get:
+      summary: List evidence attached to a node
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  evidence:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EvidenceItem'
+
+  # P0-2: Trail API with Artifact Versioning
+  /api/tree/{treeId}/trail:
+    post:
+      summary: Generate a new Trail version from keyframes
+      tags: [Trail]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: string
+                  description: Optional LLM provider hint
+                model:
+                  type: string
+                  description: Optional model override
+      responses:
+        "201":
+          description: Trail version created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrailGenerateResponse'
+        "400":
+          description: No keyframes found
+        "502":
+          description: LLM generation failed
+
+  /api/tree/{treeId}/trail/latest:
+    get:
+      summary: Get the latest Trail version for a tree
+      tags: [Trail]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Latest Trail version (or null if none)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrailLatestResponse'
+
+  /api/tree/{treeId}/trail/versions:
+    get:
+      summary: List Trail version history with pagination
+      tags: [Trail]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of Trail versions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrailVersionsListResponse'
+
+  /api/tree/{treeId}/trail/versions/{versionId}:
+    get:
+      summary: Get a specific Trail version by ID
+      tags: [Trail]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: versionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Trail version with content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrailVersionResponse'
+        "404":
+          description: Version not found
+
+  # P1-1: PathSnapshot API
+  /api/tree/{treeId}/path-snapshots:
+    post:
+      summary: Create a PathSnapshot from current keyframes
+      tags: [PathSnapshot]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Optional title for the snapshot
+                scope:
+                  type: string
+                  enum: [keyframes, subtree, custom]
+                  default: keyframes
+      responses:
+        "201":
+          description: PathSnapshot created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathSnapshotCreateResponse'
+        "400":
+          description: No keyframes found
+    get:
+      summary: List PathSnapshots for a tree
+      tags: [PathSnapshot]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated list of PathSnapshots
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathSnapshotListResponse'
+
+  /api/tree/{treeId}/path-snapshots/latest:
+    get:
+      summary: Get the latest PathSnapshot for a tree
+      tags: [PathSnapshot]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Latest PathSnapshot (or null if none)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathSnapshotResponse'
+
+  /api/tree/{treeId}/path-snapshots/{snapshotId}:
+    get:
+      summary: Get a specific PathSnapshot by ID
+      tags: [PathSnapshot]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: snapshotId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: PathSnapshot with content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathSnapshotResponse'
+        "404":
+          description: Snapshot not found
+    delete:
+      summary: Delete a PathSnapshot
+      tags: [PathSnapshot]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: snapshotId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: PathSnapshot deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  deleted:
+                    type: string
+                    format: uuid
+        "404":
+          description: Snapshot not found
+
+  /api/tree/{treeId}/path-snapshots/{snapshotId}/replay:
+    post:
+      summary: Get replay data for stepping through a snapshot
+      tags: [PathSnapshot]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: snapshotId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Replay data with ordered steps
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathSnapshotReplayResponse'
+        "404":
+          description: Snapshot not found
+
+  /api/tree/{treeId}/branch-diff:
+    post:
+      summary: Compare two paths and return structured diff points
+      tags: [BranchDiff]
+      parameters:
+        - name: treeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchDiffRequest'
+      responses:
+        "200":
+          description: Branch diff result with structured points
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BranchDiffResponse'
+        "400":
+          description: Invalid input
+        "404":
+          description: Node or snapshot not found
+
+components:
+  schemas:
+    # P0-2: Trail API Schemas
+    TrailVersion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        prompt_version:
+          type: string
+        provider:
+          type: string
+        model:
+          type: string
+        input:
+          type: object
+          properties:
+            keyframe_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+            step_count:
+              type: integer
+            truncation:
+              type: object
+        validation_metrics:
+          type: object
+          properties:
+            stepHeadersFound:
+              type: integer
+            jumpLinksFound:
+              type: integer
+            matchedNodeIds:
+              type: integer
+            hasKeyTakeaways:
+              type: boolean
+
+    TrailGenerateResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        version:
+          $ref: '#/components/schemas/TrailVersion'
+        content_markdown:
+          type: string
+        keyframes_count:
+          type: integer
+        steps_processed:
+          type: integer
+        duration_ms:
+          type: integer
+        validation:
+          type: object
+          properties:
+            warnings:
+              type: array
+              items:
+                type: string
+            metrics:
+              type: object
+
+    TrailLatestResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        version:
+          $ref: '#/components/schemas/TrailVersion'
+          nullable: true
+        content_markdown:
+          type: string
+          nullable: true
+        legacy:
+          type: boolean
+          description: True if content is from legacy narrative_report column
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TrailVersionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        prompt_version:
+          type: string
+        provider:
+          type: string
+        model:
+          type: string
+        input:
+          type: object
+        content_length:
+          type: integer
+        step_count:
+          type: integer
+          nullable: true
+
+    TrailVersionsListResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrailVersionSummary'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+            has_more:
+              type: boolean
+
+    TrailVersionResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        version:
+          $ref: '#/components/schemas/TrailVersion'
+        content_markdown:
+          type: string
+
+    # P1-1: PathSnapshot API Schemas
+    PathSnapshot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        prompt_version:
+          type: string
+        title:
+          type: string
+          nullable: true
+        keyframe_count:
+          type: integer
+        node_count:
+          type: integer
+        input:
+          type: object
+          properties:
+            title:
+              type: string
+            keyframe_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+            node_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+            scope:
+              type: string
+            generated_from:
+              type: string
+            step_count:
+              type: integer
+            steps:
+              type: array
+              items:
+                $ref: '#/components/schemas/PathSnapshotStep'
+
+    PathSnapshotStep:
+      type: object
+      properties:
+        step_index:
+          type: integer
+        keyframe_id:
+          type: string
+          format: uuid
+        node_id:
+          type: string
+          format: uuid
+        parent_id:
+          type: string
+          format: uuid
+          nullable: true
+        level:
+          type: integer
+        role:
+          type: string
+        annotation:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        text_preview:
+          type: string
+
+    PathSnapshotCreateResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        snapshot:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            created_at:
+              type: string
+              format: date-time
+            title:
+              type: string
+            keyframe_count:
+              type: integer
+            node_count:
+              type: integer
+            scope:
+              type: string
+        content_markdown:
+          type: string
+
+    PathSnapshotResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        snapshot:
+          $ref: '#/components/schemas/PathSnapshot'
+          nullable: true
+        content_markdown:
+          type: string
+          nullable: true
+
+    PathSnapshotListResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        snapshots:
+          type: array
+          items:
+            $ref: '#/components/schemas/PathSnapshot'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+            has_more:
+              type: boolean
+
+    PathSnapshotReplayStep:
+      type: object
+      properties:
+        step_index:
+          type: integer
+        node_id:
+          type: string
+          format: uuid
+        annotation:
+          type: string
+          nullable: true
+        role:
+          type: string
+        text_preview:
+          type: string
+        is_valid:
+          type: boolean
+          description: True if the node still exists
+
+    PathSnapshotReplayResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        snapshot_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          nullable: true
+        total_steps:
+          type: integer
+        valid_steps:
+          type: integer
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/PathSnapshotReplayStep'
+        warnings:
+          type: array
+          items:
+            type: string
+
+    # P1-2: BranchDiff API Schemas
+    BranchDiffRequest:
+      type: object
+      properties:
+        node_id_a:
+          type: string
+          format: uuid
+        node_id_b:
+          type: string
+          format: uuid
+        path_snapshot_id_a:
+          type: string
+          format: uuid
+        path_snapshot_id_b:
+          type: string
+          format: uuid
+
+    BranchDiffPoint:
+      type: object
+      properties:
+        summary:
+          type: string
+        node_ids_a:
+          type: array
+          items:
+            type: string
+            format: uuid
+        node_ids_b:
+          type: array
+          items:
+            type: string
+            format: uuid
+        rationale:
+          type: string
+
+    BranchDiffArtifact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        prompt_version:
+          type: string
+        input:
+          type: object
+
+    BranchDiffResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        diff:
+          $ref: '#/components/schemas/BranchDiffArtifact'
+        diff_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/BranchDiffPoint'
+        warnings:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        content_markdown:
+          type: string
+
+    UserSettings:
+      type: object
+      properties:
+        enable_advanced_context:
+          type: boolean
+          description: "Whether the user enables advanced context profiles; requires at least one validated BYOK provider. When true, platform default model is disabled."
+        preferred_llm_provider:
+          type: string
+          description: "Current provider selection; default platform provider is blocked when enable_advanced_context is true."
+
+    TreeContext:
+      type: object
+      properties:
+        context_profile:
+          type: string
+          description: "Context profile for the tree"
+          enum: [lite, standard, max]
+        memory_scope:
+          type: string
+          description: "Memory scope for the tree"
+          enum: [branch, tree]
+        tree_summary:
+          type: object
+          description: "Full tree summary payload (may include provider/model/updated_at)"
+          additionalProperties: true
+        tree_summary_text:
+          type: string
+          description: "Convenience text extracted from tree_summary"
+        tree_summary_updated_at:
+          type: string
+          format: date-time
+          description: "Timestamp of last successful tree summary generation"
+        tree_summary_last_error:
+          type: string
+          description: "Last error message from tree summary generation (sanitized)"
+        tree_summary_last_error_at:
+          type: string
+          format: date-time
+          description: "Timestamp of last tree summary error"
+
+    BranchSuggestRequest:
+      type: object
+      required: [conversation, last_node]
+      properties:
+        conversation:
+          type: string
+        last_node:
+          type: string
+
+    BranchSuggestResponse:
+      type: object
+      required: [branch_id]
+      properties:
+        branch_id:
+          type: string
+
+    BranchConfirmRequest:
+      type: object
+      required: [branch_id, accepted]
+      properties:
+        branch_id:
+          type: string
+        accepted:
+          type: boolean
+
+    BranchConfirmResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+
+    MemoAnchor:
+      type: object
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+
+    MemoBullet:
+      type: object
+      properties:
+        text:
+          type: string
+        anchors:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoAnchor'
+
+    MemoCoverage:
+      type: object
+      properties:
+        node_count:
+          type: integer
+        delta_count:
+          type: integer
+          nullable: true
+
+    MemoScope:
+      type: object
+      properties:
+        type:
+          type: string
+        root_node_id:
+          type: string
+
+    Memo:
+      type: object
+      properties:
+        memo_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        scope:
+          $ref: '#/components/schemas/MemoScope'
+        bullets:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoBullet'
+        coverage:
+          $ref: '#/components/schemas/MemoCoverage'
+        based_on_memo_id:
+          type: string
+          nullable: true
+        lang:
+          type: string
+
+    MemoHistoryItem:
+      type: object
+      properties:
+        memo_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        lang:
+          type: string
+        to_node_seq:
+          type: integer
+        title:
+          type: string
+        first_bullet_preview:
+          type: string
+
+    MemoHistoryMeta:
+      type: object
+      properties:
+        current_max_node_seq:
+          type: integer
+
+    MemoHistoryResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoHistoryItem'
+        meta:
+          $ref: '#/components/schemas/MemoHistoryMeta'
+
+    MemoGetResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        memo:
+          $ref: '#/components/schemas/Memo'
+
+    MemoLatestMeta:
+      type: object
+      properties:
+        current_max_node_seq:
+          type: integer
+        memo_to_node_seq:
+          type: integer
+        is_outdated:
+          type: boolean
+
+    MemoLatestResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        latest_memo:
+          $ref: '#/components/schemas/Memo'
+        meta:
+          $ref: '#/components/schemas/MemoLatestMeta'
+
+    MemoGenerateRequest:
+      type: object
+      properties:
+        tree_id:
+          type: string
+        focus_node_id:
+          type: string
+        limit_n:
+          type: integer
+        based_on_memo_id:
+          type: string
+        provider:
+          type: string
+        model:
+          type: string
+        lang:
+          type: string
+          enum: [auto, en, zh]
+
+    MemoGenerateResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        memo:
+          $ref: '#/components/schemas/Memo'
+
+    TreeSnapshot:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        nodes:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        topic:
+          type: string
+        context:
+          $ref: '#/components/schemas/TreeContext'
+        context_profile:
+          type: string
+          enum: [lite, standard, max]
+          description: "Deprecated: use context.context_profile"
+        memory_scope:
+          type: string
+          enum: [branch, tree]
+          description: "Deprecated: use context.memory_scope"
+
+    EventsReplayRequest:
+      type: object
+      required: [events]
+      properties:
+        events:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    OutcomeDraft:
+      type: object
+      properties:
+        id:
+          type: string
+        tree_id:
+          type: string
+        snapshot_id:
+          type: string
+        outcome_type:
+          type: string
+          enum: [decision, brief, report]
+        outline_sections:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              title:
+                type: string
+              summary:
+                type: string
+              sources:
+                type: array
+                items:
+                  type: string
+        evidence_requirements:
+          type: array
+          items:
+            type: object
+            properties:
+              section_key:
+                type: string
+              title:
+                type: string
+              needs:
+                type: string
+              sources:
+                type: array
+                items:
+                  type: string
+              gaps:
+                type: array
+                items:
+                  type: string
+              status:
+                type: string
+        gap_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Outcome:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        tree_id:
+          type: string
+        anchor_node_id:
+          type: string
+        title:
+          type: string
+        conclusion:
+          type: string
+        report_json:
+          type: object
+          additionalProperties: true
+        derived_from_outcome_id:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [generating, generated, edited]
+        prompt_version:
+          type: string
+          nullable: true
+        generation_input:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        asset_published:
+          type: boolean
+
+    OutcomeHighlight:
+      type: object
+      properties:
+        main_path_node_ids:
+          type: array
+          items:
+            type: string
+        keyframe_node_ids:
+          type: array
+          items:
+            type: string
+
+    OutcomeAsset:
+      type: object
+      properties:
+        knowledge_base_id:
+          type: string
+        document_id:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+
+    OutcomeCreateRequest:
+      type: object
+      required: [anchor_node_id]
+      properties:
+        anchor_node_id:
+          type: string
+        title:
+          type: string
+        conclusion:
+          type: string
+        provider:
+          type: string
+          description: Optional LLM provider hint for title generation
+        model:
+          type: string
+          description: Optional model hint for title generation
+
+    OutcomePreviewRequest:
+      type: object
+      required: [anchor_node_id]
+      properties:
+        anchor_node_id:
+          type: string
+        conclusion:
+          type: string
+          description: Optional one-line conclusion hint for title generation
+        provider:
+          type: string
+          description: Optional LLM provider hint for title generation
+        model:
+          type: string
+          description: Optional model hint for title generation
+
+    OutcomePreviewResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        title_candidates:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items:
+            type: string
+        warning:
+          type: string
+          nullable: true
+
+    OutcomePatchRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        conclusion:
+          type: string
+
+    OutcomeCreateResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        outcome:
+          $ref: '#/components/schemas/Outcome'
+        title_candidates:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items:
+            type: string
+        warning:
+          type: string
+          nullable: true
+
+    OutcomeDetailResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        outcome:
+          $ref: '#/components/schemas/Outcome'
+        asset:
+          allOf:
+            - $ref: '#/components/schemas/OutcomeAsset'
+          nullable: true
+        highlight:
+          $ref: '#/components/schemas/OutcomeHighlight'
+
+    OutcomeRegenerateResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        outcome:
+          $ref: '#/components/schemas/Outcome'
+        warning:
+          type: string
+          nullable: true
+    EvidenceItem:
+      type: object
+      properties:
+        id:
+          type: string
+        tree_id:
+          type: string
+        type:
+          type: string
+          enum: [url, file, text]
+        title:
+          type: string
+        summary:
+          type: string
+        source_url:
+          type: string
+        stored_path:
+          type: string
+        text_content:
+          type: string
+        file_name:
+          type: string
+        file_size:
+          type: integer
+        mime_type:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        attached_node_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    EvidenceCreateRequest:
+      type: object
+      required: [tree_id, type, title]
+      properties:
+        tree_id:
+          type: string
+        type:
+          type: string
+          enum: [url, file, text]
+        title:
+          type: string
+        summary:
+          type: string
+        source_url:
+          type: string
+        text_content:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+    EvidenceNodeLink:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+        role:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        attached_at:
+          type: string
+          format: date-time
+    NodeEvidenceLink:
+      type: object
+      properties:
+        id:
+          type: string
+        node_id:
+          type: string
+        evidence_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time

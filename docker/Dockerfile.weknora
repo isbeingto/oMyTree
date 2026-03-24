@@ -1,0 +1,32 @@
+FROM golang:1.22-bookworm AS build
+
+WORKDIR /src
+
+# Go toolchain: allow auto toolchain download (go.mod uses toolchain directive)
+ENV GOTOOLCHAIN=auto
+
+COPY services/weknora/go.mod services/weknora/go.sum ./services/weknora/
+RUN cd services/weknora && go mod download
+
+COPY services/weknora ./services/weknora
+
+RUN cd services/weknora && \
+  CGO_ENABLED=1 go build -o /out/WeKnora ./cmd/server
+
+FROM debian:bookworm-slim AS runtime
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates wget \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=build /out/WeKnora /app/WeKnora
+COPY services/weknora/config /app/config
+COPY services/weknora/migrations /app/migrations
+COPY services/weknora/docs /app/docs
+COPY services/weknora/client /app/client
+
+EXPOSE 8081
+
+CMD ["/app/WeKnora"]

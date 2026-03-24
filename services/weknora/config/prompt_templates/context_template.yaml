@@ -1,0 +1,65 @@
+# 上下文模板
+templates:
+  - id: "default_context"
+    name: "标准模板"
+    description: "标准的上下文格式化模板"
+    has_knowledge_base: true
+    content: |
+      请根据以下参考资料回答用户问题。
+
+      参考资料：
+      {{contexts}}
+
+      用户问题：{{query}}
+
+      请基于上述参考资料进行回答。如果参考资料不足以回答问题，请明确告知。
+
+  - id: "detailed_context"
+    name: "详细模板"
+    description: "包含详细说明的上下文模板"
+    has_knowledge_base: true
+    content: |
+      ## 任务说明
+      请根据提供的参考资料，准确、全面地回答用户问题。
+
+      ## 参考资料
+      {{contexts}}
+
+      ## 用户问题
+      {{query}}
+
+      ## 回答要求
+      1. 仅基于参考资料回答，不要编造信息
+      2. 如果多个资料有冲突，请综合分析
+      3. 适当引用来源，增强可信度
+      4. 如果资料不足，请明确说明
+
+      当前时间：{{current_time}} {{current_week}}
+
+  - id: "simple_context"
+    name: "简洁模板"
+    description: "简洁的上下文模板"
+    has_knowledge_base: true
+    content: |
+      参考资料：
+      {{contexts}}
+
+      问题：{{query}}
+
+      请回答上述问题。
+
+  - id: "qa_context"
+    name: "问答模板"
+    description: "问答场景专用模板"
+    has_knowledge_base: true
+    content: |
+      你需要回答一个问题。以下是可能相关的资料：
+
+      {{contexts}}
+
+      用户的问题是：{{query}}
+
+      请基于以上资料回答问题。回答要求：
+      - 直接回答问题，不要重复问题
+      - 如果资料中没有相关信息，请说明
+      - 保持回答简洁准确

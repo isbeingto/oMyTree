@@ -1,0 +1,245 @@
+:root {
+  /* Semantic surfaces - deeper background for glassmorphism contrast */
+  --background: 0 0% 100%;  /* Pure white background */
+  --foreground: 155 34% 10%;
+  --card: 135 20% 92%;
+  --card-foreground: 155 34% 12%;
+  --popover: 135 20% 92%;
+  --popover-foreground: 155 34% 12%;
+  --primary: 153 33% 17%;
+  --primary-foreground: 48 33% 94%;
+  --secondary: 144 21% 86%;
+  --secondary-foreground: 155 34% 12%;
+  --muted: 144 16% 82%;
+  --muted-foreground: 157 12% 32%;
+  --accent: 164 51% 37%;
+  --accent-foreground: 48 33% 94%;
+  --destructive: 3 74% 54%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 144 16% 78%;
+  --input: 144 16% 78%;
+  --ring: 164 51% 37%;
+  --chart-1: 159 44% 46%;
+  --chart-2: 157 35% 62%;
+  --chart-3: 43 78% 68%;
+  --chart-4: 210 26% 48%;
+  --chart-5: 27 80% 60%;
+  --radius: 0.75rem;
+
+  /* ============================================================
+   * Tree Canvas Palette (Light Mode)
+   * Three-tier visual hierarchy: trunk / nearby / distant
+   * ============================================================ */
+  /* Lines - trunk: main path from root to selected node (deepest, thickest) */
+  --tree-line-trunk: 160 55% 28%;
+  --tree-line-trunk-opacity: 0.95;
+  /* Lines - nearby: siblings/children - noticeably lighter than trunk but visible */
+  --tree-line-near: 156 38% 40%;
+  --tree-line-near-opacity: 0.72;
+  /* Lines - distant: background branches - faded gray-green */
+  --tree-line-far: 148 12% 68%;
+  --tree-line-far-opacity: 0.28;
+  
+  /* Nodes - active: currently selected node (deepest green) */
+  --tree-node-active: 160 55% 22%;
+  --tree-node-active-glow: 160 60% 40%;
+  /* Nodes - trunk: on the main path but not selected (deep but not as dark) */
+  --tree-node-trunk: 158 50% 30%;
+  --tree-node-trunk-stroke: 158 30% 85%;
+  /* Nodes - nearby: siblings and direct children (medium saturation) */
+  --tree-node-near: 155 35% 45%;
+  /* Nodes - distant: background nodes (gray-green, low saturation) */
+  --tree-node-default: 148 10% 72%;
+  --tree-node-default-stroke: 148 8% 82%;
+
+  /* Active node glass card (light mode) */
+  --tree-card-bg: 0 0% 100% / 0.75;
+  --tree-card-border: 0 0% 100% / 0.5;
+  --tree-card-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  --tree-card-text: 155 34% 15%;
+  --tree-card-text-sub: 155 20% 35%;
+
+  /* Legacy tokens kept for existing sections */
+  --bg: #f2f6f3;
+  --bg-2: #e7efe9;
+  --surface: #dae5dd;
+  --surface-2: #d3e2d9;
+  --text: #0f2f24;
+  --text-dim: #355a4a;
+  --accent-hex: #2e8e75;
+  --border-hex: #d3e2d9;
+  --select: #3f9b86;
+  --select-bg: #dce7df;
+  --elevation-1: 0 12px 38px -16px hsl(156 40% 20% / 0.25);
+}
+
+.dark {
+  --background: 152 37% 7%;
+  --foreground: 48 33% 94%;
+  --card: 159 52% 12%;
+  --card-foreground: 48 33% 94%;
+  --popover: 159 52% 12%;
+  --popover-foreground: 48 33% 94%;
+  --primary: 159 52% 18%;
+  --primary-foreground: 48 33% 94%;
+  --secondary: 160 18% 16%;
+  --secondary-foreground: 48 27% 92%;
+  --muted: 160 16% 18%;
+  --muted-foreground: 42 12% 74%;
+  --accent: 164 51% 37%;
+  --accent-foreground: 48 33% 94%;
+  --destructive: 0 72% 46%;
+  --destructive-foreground: 0 0% 96%;
+  --border: 160 16% 22%;
+  --input: 160 16% 22%;
+  --ring: 164 51% 37%;
+  --chart-1: 159 44% 46%;
+  --chart-2: 157 35% 62%;
+  --chart-3: 43 78% 68%;
+  --chart-4: 210 26% 42%;
+  --chart-5: 20 80% 62%;
+  --radius: 0.75rem;
+
+  /* ============================================================
+   * Tree Canvas Palette (Dark Mode)
+   * Brighter lines on dark background for visibility
+   * ============================================================ */
+  /* Lines - trunk: main path (brightest, most saturated) */
+  --tree-line-trunk: 158 65% 45%;
+  --tree-line-trunk-opacity: 1;
+  /* Lines - nearby: siblings - visible but noticeably dimmer than trunk */
+  --tree-line-near: 156 45% 35%;
+  --tree-line-near-opacity: 0.75;
+  /* Lines - distant: background - subtle, low contrast */
+  --tree-line-far: 150 15% 25%;
+  --tree-line-far-opacity: 0.35;
+  
+  /* Nodes - active: selected node (brightest) */
+  --tree-node-active: 158 60% 40%;
+  --tree-node-active-glow: 160 70% 50%;
+  /* Nodes - trunk: on the main path (bright green) */
+  --tree-node-trunk: 158 55% 38%;
+  --tree-node-trunk-stroke: 158 40% 60%;
+  /* Nodes - nearby: siblings and children (medium) */
+  --tree-node-near: 155 38% 32%;
+  /* Nodes - distant: background nodes (dim, low saturation) */
+  --tree-node-default: 150 12% 22%;
+  --tree-node-default-stroke: 150 10% 35%;
+
+  /* Active node glass card (dark mode) */
+  --tree-card-bg: 217 33% 10% / 0.80;
+  --tree-card-border: 0 0% 100% / 0.08;
+  --tree-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --tree-card-text: 48 33% 94%;
+  --tree-card-text-sub: 42 12% 74%;
+
+  --bg: #0b1812;
+  --bg-2: #0f2017;
+  --surface: #14261d;
+  --surface-2: #193125;
+  --text: #f5f3eb;
+  --text-dim: #c2cec4;
+  --accent-hex: #2e8e75;
+  --border-hex: #1f352a;
+  --select: #2e8e75;
+  --select-bg: #14231b;
+  --elevation-1: 0 16px 42px -12px hsl(160 45% 4% / 0.65);
+}
+
+/* ============================================================
+ * T22-8: TreeCanvas Background & Grid
+ * Multi-layer background: base + line grid + glow
+ * ============================================================ */
+
+/* Light mode background */
+.tree-canvas-bg {
+  /* Layer 1: Base background color */
+  background-color: hsl(var(--background));
+  
+  /* Layer 2: Subtle line grid pattern (40px spacing) */
+  background-image: 
+    linear-gradient(to right, hsl(155 25% 45% / 0.10) 0.8px, transparent 0.8px),
+    linear-gradient(to bottom, hsl(155 25% 45% / 0.10) 0.8px, transparent 0.8px);
+  background-size: 40px 40px;
+  background-position: 0 0;
+}
+
+/* Chat background: clean solid color (dot grid removed for cleaner look) */
+.chat-canvas-bg {
+  background-color: hsl(var(--background));
+}
+
+/* Glow overlay - follows selected node */
+.tree-canvas-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    650px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    hsl(160 55% 42% / 0.14) 0%,
+    hsl(160 45% 50% / 0.06) 30%,
+    transparent 65%
+  );
+  transition: background 450ms ease-out;
+}
+
+/* Dark mode adjustments */
+.dark .tree-canvas-bg {
+  background-color: hsl(var(--background));
+  
+  /* Slightly brighter grid lines for dark mode visibility */
+  background-image: 
+    linear-gradient(to right, hsl(160 40% 40% / 0.13) 0.8px, transparent 0.8px),
+    linear-gradient(to bottom, hsl(160 40% 40% / 0.13) 0.8px, transparent 0.8px);
+  background-size: 40px 40px;
+}
+
+.dark .chat-canvas-bg {
+  background-color: hsl(var(--background));
+}
+
+.dark .tree-canvas-container::after {
+  background: radial-gradient(
+    600px circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    hsl(165 60% 38% / 0.16) 0%,
+    hsl(160 50% 35% / 0.07) 30%,
+    transparent 60%
+  );
+}
+
+/* ============================================================
+ * Sidebar Background & Grid (mirrors TreeCanvas pattern)
+ * ============================================================ */
+
+/* Light mode sidebar background */
+/* NOTE: Do NOT use position: relative here - it breaks fixed-positioned
+   elements like Radix Sheet that use this class. Instead, we use a
+   layered background approach without pseudo-elements requiring relative. */
+.sidebar-dot-bg {
+  background-color: hsl(var(--background));
+  background-image: 
+    linear-gradient(to right, hsl(155 25% 45% / 0.10) 0.8px, transparent 0.8px),
+    linear-gradient(to bottom, hsl(155 25% 45% / 0.10) 0.8px, transparent 0.8px);
+  background-size: 40px 40px;
+  background-position: 0 0;
+  mask-image: radial-gradient(ellipse 120% 80% at center, black 58%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 120% 80% at center, black 58%, transparent 100%);
+}
+
+/* Non-fixed sidebar elements that need the dot overlay */
+.sidebar-dot-bg:not(.fixed)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Dark mode sidebar background */
+.dark .sidebar-dot-bg {
+  background-image: 
+    linear-gradient(to right, hsl(160 40% 40% / 0.13) 0.8px, transparent 0.8px),
+    linear-gradient(to bottom, hsl(160 40% 40% / 0.13) 0.8px, transparent 0.8px);
+  background-size: 40px 40px;
+}
+

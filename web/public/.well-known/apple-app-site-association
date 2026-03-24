@@ -1,0 +1,25 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAM_ID.com.omytree.ios",
+        "paths": [
+          "/tree/*",
+          "/shared/*",
+          "/auth/verify-email/*",
+          "/auth/reset-password/*"
+        ],
+        "components": [
+          { "/": "/tree/*" },
+          { "/": "/shared/*" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "TEAM_ID.com.omytree.ios"
+    ]
+  }
+}

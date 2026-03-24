@@ -1,0 +1,82 @@
+name: 🐛 Bug 报告
+description: 报告一个 bug 或问题
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢您报告 bug！请填写以下信息帮助我们快速定位和解决问题。
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: 相关组件
+      description: 选择出现问题的组件
+      options:
+        - 前端界面
+        - 后端服务及API
+        - 文档解析服务
+        - 向量数据库
+        - 模型服务
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug 描述
+      description: 请详细描述遇到的问题
+      placeholder: "请描述 bug 的具体表现..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      description: 描述您期望的正确行为
+      placeholder: "应该发生什么..."
+    validations:
+      required: true
+
+
+  - type: markdown
+    attributes:
+      value: |
+        ## 📋 日志收集指南
+        
+        请按照以下步骤收集相关日志：
+        
+        docker compose logs -f --tail=1000 app docreader postgres
+        
+        请重现问题并收集相关日志，然后粘贴到下面的日志字段中。
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 相关日志
+      description: 请按照上面的指南收集并粘贴相关日志
+      placeholder: |
+        请粘贴从以下命令收集的日志：
+        docker compose logs -f --tail=1000 app docreader postgres
+      render: shell
+
+  - type: input
+    id: os
+    attributes:
+      label: 操作系统
+      description: 您当前使用的操作系统
+      placeholder: "例如: macOS 13.0, Ubuntu 20.04, Windows 11"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 确认事项
+      description: 请确认以下事项
+      options:
+        - label: 我已经搜索了现有的 issues，确认这是一个新问题
+          required: true

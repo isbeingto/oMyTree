@@ -1,0 +1,207 @@
+name: omytree
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: omytree-postgres
+    environment:
+      POSTGRES_USER: omytree
+      POSTGRES_PASSWORD: omytree_dev_password
+      POSTGRES_DB: omytree
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init/00_create_weknora_db.sql:/docker-entrypoint-initdb.d/00_create_weknora_db.sql:ro
+      - ../database/sql/init_pg.sql:/docker-entrypoint-initdb.d/01_init_pg.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U omytree -d omytree"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: omytree-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: omytree-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  weknora:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.weknora
+    container_name: omytree-weknora
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      docreader:
+        condition: service_started
+    ports:
+      - "8081:8081"
+    environment:
+      # WeKnora
+      GIN_MODE: release
+      DISABLE_REGISTRATION: "true"
+
+      # DB
+      DB_DRIVER: postgres
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: omytree
+      DB_PASSWORD: omytree_dev_password
+      DB_NAME: omytree_weknora
+
+      # Qdrant
+      RETRIEVE_DRIVER: qdrant
+      EMBEDDING_MIGRATION_POLICY: qdrant_only
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: "6334"
+      QDRANT_COLLECTION: omytree_kb
+      QDRANT_USE_TLS: "false"
+      DB_MAX_OPEN_CONNS: "20"
+      DB_MAX_IDLE_CONNS: "10"
+      DB_CONN_MAX_LIFETIME_MINUTES: "10"
+      DB_CONN_MAX_IDLE_TIME_MINUTES: "5"
+
+      # DocReader
+      DOCREADER_ADDR: docreader:50051
+
+      # Storage
+      STORAGE_TYPE: local
+      LOCAL_STORAGE_BASE_DIR: /data/weknora/files
+
+      # Redis
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: "0"
+
+      # Feature flags
+      STREAM_MANAGER_TYPE: memory
+      ENABLE_GRAPH_RAG: "false"
+      AUTO_MIGRATE: "true"
+      AUTO_RECOVER_DIRTY: "true"
+
+      # Security (dev defaults; override in production)
+      TENANT_AES_KEY: "CHANGE_ME_TENANT_AES_KEY_64_HEX"
+      JWT_SECRET: "CHANGE_ME_JWT_SECRET_64_HEX"
+
+    volumes:
+      - weknora_files:/data/weknora/files
+      - ./weknora/config.yaml:/app/config/config.yaml:ro
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget -qO- http://127.0.0.1:8081/health >/dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  docreader:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.docreader
+    container_name: omytree-docreader
+    ports:
+      - "50051:50051"
+    environment:
+      DOCREADER_GRPC_PORT: "50051"
+      DOCREADER_GRPC_MAX_WORKERS: "4"
+      DOCREADER_OCR_BACKEND: "no_ocr"
+      DOCREADER_STORAGE_TYPE: "local"
+      DOCREADER_LOCAL_STORAGE_BASE_DIR: /data/weknora/files
+      # proto imports
+      PYTHONPATH: /app/services/weknora/docreader/proto:/app/services/weknora
+    volumes:
+      - weknora_files:/data/weknora/files
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+    container_name: omytree-api
+    working_dir: /app/api
+    command: ["node", "index.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "8000"
+
+      TREE_ADAPTER: pg
+      PG_DSN: "postgres://omytree:omytree_dev_password@postgres:5432/omytree?sslmode=disable"
+
+      PGUSER: omytree
+      PGPASSWORD: omytree_dev_password
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: omytree
+      PGSSLMODE: disable
+      PGCONNECT_TIMEOUT: "2"
+      PGPOOL_MAX: "40"
+      PGPOOL_IDLE_TIMEOUT_MS: "30000"
+      PGPOOL_CONNECTION_TIMEOUT_MS: "10000"
+      PG_TREE_ADAPTER_POOL_MAX: "10"
+      ENABLE_LEGACY_BRANCH_API: "true"
+      ENABLE_LEGACY_EVENT_REPLAY_API: "true"
+
+      ACCEPT_DEV_ENDPOINTS: "1"
+
+      # LLM / Mail / Captcha: dev placeholders (set real values in production)
+      OPENAI_API_KEY: ""
+      LLM_MODEL: gpt-4o-mini
+      MAIL_PROVIDER: log
+      APP_PUBLIC_URL: http://localhost:3000
+      API_KEY_ENCRYPTION_SECRET: "CHANGE_ME_API_KEY_ENCRYPTION_SECRET_BASE64"
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.node
+    container_name: omytree-web
+    working_dir: /app/web
+    command: ["sh", "-c", "node scripts/ensure-build.mjs && ./node_modules/next/dist/bin/next start -p 3000 -H 0.0.0.0"]
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+
+      API_PROXY_TARGET: http://api:8000
+
+      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      AUTH_TRUST_HOST: "true"
+      NEXTAUTH_SECRET: "CHANGE_ME_NEXTAUTH_SECRET"
+
+      DATABASE_URL: "postgres://omytree:omytree_dev_password@postgres:5432/omytree?sslmode=disable"
+      PG_DSN: "postgres://omytree:omytree_dev_password@postgres:5432/omytree?sslmode=disable"
+
+      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: "CHANGE_ME_NEXT_SERVER_ACTIONS_ENCRYPTION_KEY"
+
+volumes:
+  pgdata:
+  qdrant_storage:
+  weknora_files:

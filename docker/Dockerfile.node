@@ -1,0 +1,31 @@
+FROM node:20-bookworm-slim AS build
+
+WORKDIR /app
+
+# Enable pnpm via corepack
+RUN corepack enable
+
+# Copy workspace manifests first (better layer cache)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY api/package.json ./api/package.json
+COPY web/package.json ./web/package.json
+
+# Install deps
+RUN pnpm install --frozen-lockfile
+
+# Copy full repo
+COPY . .
+
+# Build web (includes OpenAPI type gen)
+RUN pnpm --filter omytree-web run gen:types \
+  && pnpm --filter omytree-web run build
+
+FROM node:20-bookworm-slim AS runtime
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY --from=build /app /app
+
+# Default command is overridden by docker compose service commands.
+CMD ["node", "-v"]

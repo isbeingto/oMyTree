@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BranchSuggestResponse",
+  "type": "object",
+  "required": ["trace_id", "candidates"],
+  "properties": {
+    "trace_id": { "type": "string" },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "summary", "parent_id", "status", "source"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "summary": { "type": ["string", "null"] },
+          "parent_id": { "type": ["string", "null"] },
+          "status": { "type": "string", "enum": ["candidate"] },
+          "source": {
+            "type": "object",
+            "properties": {
+              "ai_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+              "reason": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

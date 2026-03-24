@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BranchSuggestRequest",
+  "type": "object",
+  "required": ["conversation", "last_node"],
+  "properties": {
+    "conversation": { "type": "string" },
+    "last_node": { "type": "string" }
+  }
+}
