@@ -164,6 +164,116 @@ pm2 list
 pnpm --filter omytree-web run build && pm2 reload omytree-web
 pm2 reload omytree-api
 ```
+
+**5. Nginx 反向代理**
+
+> ⚠️ **关键：** 如果不正确配置 Nginx，LLM 流式对话将会卡死、文件上传会失败。以下配置中的超时与缓冲设置对项目正常运行至关重要。
+
+安装 Nginx 并创建站点配置：
+```bash
+sudo apt install nginx
+sudo nano /etc/nginx/conf.d/omytree.conf
+```
+
+参考配置模板（将 `YOUR_DOMAIN` 替换为你的域名）：
+```nginx
+upstream nextjs {
+    server 127.0.0.1:3000;
+    keepalive 64;
+}
+
+upstream api {
+    server 127.0.0.1:8000;
+    keepalive 64;
+}
+
+# HTTP → HTTPS 重定向
+server {
+    listen 80;
+    server_name YOUR_DOMAIN;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://YOUR_DOMAIN$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name YOUR_DOMAIN;
+
+    ssl_certificate     /etc/letsencrypt/live/YOUR_DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    # 安全头
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+
+    # 文件上传限制（知识库上传需要）
+    client_max_body_size 50M;
+
+    # Gzip
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml application/json application/javascript application/xml;
+
+    # ========== 核心：所有请求先到 Next.js ==========
+    # Next.js 通过 rewrites 将 API 请求转发到后端，Nginx 无需分流
+    location / {
+        proxy_pass http://nextjs;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+
+        # ⚠️ LLM 流式对话需要：关闭缓冲 + 延长超时
+        proxy_buffering off;
+        proxy_connect_timeout 120s;
+        proxy_send_timeout    120s;
+        proxy_read_timeout    120s;
+    }
+
+    # Next.js 静态资源长缓存
+    location /_next/static {
+        proxy_pass http://nextjs;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # 健康检查（直达 API 后端）
+    location /readyz  { proxy_pass http://api; access_log off; }
+    location /metrics { proxy_pass http://api; access_log off; }
+}
+```
+
+申请 SSL 证书并启用：
+```bash
+# 安装 certbot
+sudo apt install certbot python3-certbot-nginx
+
+# 申请证书（自动配置 Nginx）
+sudo certbot --nginx -d YOUR_DOMAIN
+
+# 验证并重载
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+> 💡 **架构说明：** 浏览器 → Nginx → Next.js (`:3000`) → rewrites → API (`:8000`)。
+> Nginx 只需要认识 Next.js 即可，API 路由分发由 Next.js `rewrites` 和 Route Handlers 完成。
+
 </details>
 
 <br/>

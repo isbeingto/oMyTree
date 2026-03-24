@@ -162,6 +162,116 @@ pm2 list
 pnpm --filter omytree-web run build && pm2 reload omytree-web
 pm2 reload omytree-api
 ```
+
+**6. Nginx Reverse Proxy**
+
+> ⚠️ **Critical:** Without proper Nginx configuration, LLM streaming will hang and file uploads will fail. The timeout and buffering settings below are essential for the application to function correctly.
+
+Install Nginx and create the site configuration:
+```bash
+sudo apt install nginx
+sudo nano /etc/nginx/conf.d/omytree.conf
+```
+
+Reference configuration template (replace `YOUR_DOMAIN` with your actual domain):
+```nginx
+upstream nextjs {
+    server 127.0.0.1:3000;
+    keepalive 64;
+}
+
+upstream api {
+    server 127.0.0.1:8000;
+    keepalive 64;
+}
+
+# HTTP → HTTPS redirect
+server {
+    listen 80;
+    server_name YOUR_DOMAIN;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://YOUR_DOMAIN$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name YOUR_DOMAIN;
+
+    ssl_certificate     /etc/letsencrypt/live/YOUR_DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    # Security headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+
+    # Upload size limit (required for knowledge-base file uploads)
+    client_max_body_size 50M;
+
+    # Gzip
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml application/json application/javascript application/xml;
+
+    # ========== Core: All traffic goes to Next.js first ==========
+    # Next.js rewrites handle API routing — no Nginx splitting needed
+    location / {
+        proxy_pass http://nextjs;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+
+        # ⚠️ Required for LLM streaming: disable buffering + extend timeouts
+        proxy_buffering off;
+        proxy_connect_timeout 120s;
+        proxy_send_timeout    120s;
+        proxy_read_timeout    120s;
+    }
+
+    # Next.js static assets with long cache
+    location /_next/static {
+        proxy_pass http://nextjs;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Health checks (direct to API backend)
+    location /readyz  { proxy_pass http://api; access_log off; }
+    location /metrics { proxy_pass http://api; access_log off; }
+}
+```
+
+Obtain SSL certificates and activate:
+```bash
+# Install certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Obtain certificate (auto-configures Nginx)
+sudo certbot --nginx -d YOUR_DOMAIN
+
+# Verify and reload
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+> 💡 **Architecture Note:** Browser → Nginx → Next.js (`:3000`) → rewrites → API (`:8000`).
+> Nginx only needs to know about Next.js. API routing is handled entirely by Next.js `rewrites` and Route Handlers.
+
 </details>
 
 <br/>
