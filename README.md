@@ -1,515 +1,258 @@
-# oMyTree 🌿
+# oMyTree
 
-**深度研究者的 AI 工作台** - 用「无限画布 + 树状结构」保存思考过程，并将阶段性成果沉淀为可复用的知识资产。
+[English](README.en.md) | 简体中文
 
-[![在线访问](https://img.shields.io/badge/Live-www.omytree.com-brightgreen)](https://www.omytree.com)
-[![Node](https://img.shields.io/badge/Node-20%2B-green)](https://nodejs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-blue)](https://www.postgresql.org/)
+[![Live](https://img.shields.io/badge/Live-www.omytree.com-1f7a5a)](https://www.omytree.com)
+[![Node](https://img.shields.io/badge/Node-20%2B-3c873a)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-336791)](https://www.postgresql.org/)
+[![License](https://img.shields.io/badge/License-MIT-black)](LICENSE)
 
----
+oMyTree 是一个面向深度研究与复杂思考场景的 AI 工作台。它把“对话结果”进一步推进为“过程资产”：用户可以在无限画布上持续分叉、批注、归纳、生成成果，并把可复用经验沉淀进知识库。
 
-> **📢 开源发布 (2026-03)**
->
-> oMyTree 现已开源！欢迎社区参与贡献，详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+与传统聊天产品不同，oMyTree 关注的不只是最终答案，而是如何把探索过程、证据链和阶段性结论保留下来，形成可追溯、可复用、可协作的知识结构。
 
----
+> 品牌说明：项目已于 2026-01-22 从 LinZhi 更名为 oMyTree。历史文档中可能仍会看到旧名称。
 
-## 目录
+## Overview
 
-- [🎯 项目愿景](#-项目愿景)
-- [🧠 三层架构](#-三层架构)
-- [✨ 核心特性](#-核心特性)
-- [🏗️ 技术架构](#️-技术架构)
-- [🚀 快速开始](#-快速开始)
-  - [环境要求](#环境要求)
-  - [从零开始搭建](#从零开始搭建)
-  - [运行服务](#运行服务)
-- [💻 开发指南](#-开发指南)
-  - [开发工作流](#开发工作流)
-  - [项目结构](#项目结构)
-  - [常用命令](#常用命令)
-- [⚙️ 配置说明](#️-配置说明)
-  - [环境变量](#环境变量)
-  - [数据库配置](#数据库配置)
-- [🧪 测试与验证](#-测试与验证)
-- [📚 文档导航](#-文档导航)
-- [🆘 故障排除](#-故障排除)
+- 无限画布 + 树状结构：允许围绕任意节点继续分叉，而不是被线性对话限制。
+- 过程策展：通过批注、关键帧与成果报告，把“思考过程”而不只是“最终结论”沉淀下来。
+- 知识库联动：把成果进一步资产化，并在后续对话中按用户显式选择进行检索增强。
+- 多模型工作流：支持 GPT、Gemini、DeepSeek、BYOK / Ollama 等多种模型接入。
 
----
+## Why oMyTree
 
-## 🎯 项目愿景
+AI 让“获得答案”越来越容易，但对于研究、写作、分析、产品设计、知识管理等复杂任务，真正稀缺的是：
 
-随着 AI 使用频率提高，**获取信息越来越容易，但真正理解、记住并复用推理过程反而更难**。信息过载正在成为新的瓶颈。
+- 哪些分支已经探索过
+- 哪些证据真正重要
+- 某个阶段性结论是如何推导出来的
+- 哪些经验值得进入长期知识库复用
 
-oMyTree 关注的不是「生成更多内容」，而是「**保存思考过程**」：把多轮对话中的发散探索、关键批注与阶段性成果，沉淀为可回溯、可管理、可复用的**过程资产**。
+oMyTree 的目标，是把这些原本容易丢失的中间过程变成结构化资产。
 
-我们相信：
+## Core Highlights
 
-- **树形结构是人类思维的自然形式** - 从大纲到知识图谱，树形结构贯穿人类知识管理的始终
-- **AI 应该增强而非取代人类思考** - 通过智能问答和分支建议，帮助用户深入探索每一个想法
-- **过程资产应该可追溯、可复用、可分享** - 不仅保存「结论」，更保存「如何一步步得到结论」
+### 1. Space → Curation → Assets 三层结构
 
----
+项目围绕三个连续层次构建：
 
-## 🧠 三层架构
+- Space：无限画布与树状问答，承载发散探索。
+- Curation：通过 Keyframes 与 Outcomes 主动收敛，形成可阅读、可引用的过程叙事。
+- Assets：将高价值成果沉淀为知识库资产，进入后续检索与复用链路。
 
-oMyTree 的产品与代码实现可以用三层来理解：**空间层 → 策展层 → 资产层**。
+这不是简单的“聊天 + RAG”拼接，而是一套从探索、整理到资产化的连续工作流。
 
-### Layer 1：无限生长的空间层（Space / TreeCanvas）
+### 2. 可追溯成果，而不是纯生成摘要
 
-**目标**：提供一块「无限画布」来承载发散探索——允许用户在任意节点分叉、试错、继续深入，并对 AI 回复做批注，完整保留“草稿纸”。
+成果报告不是独立生成的一段文本。系统会以锚点节点为中心，回溯 root 到 anchor 的主路径，并结合关键帧批注生成带来源依据的结果，使结论能够回看、审查和复用。
 
-**代码入口（核心）**
-- Web：`web/app/app/workspace/TreeWorkspace.tsx`（工作区主页面）、`web/app/app/workspace/TreeCanvas.tsx`（无限画布/树可视化）、`web/app/app/workspace/ChatPane.tsx`（对话与上下文微操）、`web/app/tree/qaClient.ts`（树数据拉取）
-- API：`api/routes/tree_qa.js`（树数据聚合输出给前端）、`api/routes/turn.js` + `api/services/turn/create.js`（对话轮次/分叉继续）、`api/routes/node*.js`（节点操作）、`api/db/migrations/20251110_t1_1_schema.sql`（trees/nodes/turns 主表）
+### 3. 用户控制的知识召回
 
-### Layer 2：主动意识的策展层（Curation / Keyframes + Outcomes）
+知识库能力已接入腾讯开源的 WeKnora 项目，并在 oMyTree 中作为独立知识层与对话层整合。当前设计明确坚持“手动选择知识库/文件再召回”的策略，避免隐式自动召回带来的上下文污染，保留用户对检索范围的控制权。
 
-**目标**：树会自然长得很“乱”，需要用户主动标记“我认为有价值的逻辑”。Layer2 通过两类机制把噪音收敛为可读的过程叙事：
-- **批注/关键帧（Keyframes）**：用户对任意节点（尤其是 AI 回复）添加批注，形成可被引用的“关键证据点”
-- **成果（Outcomes / 成果报告）**：用户在某个关键节点点击「新建成果」，系统自动回溯 root→anchor 主路径，结合关键帧批注，生成带 `sources` 的成果报告（强调过程可溯源）
+### 4. 前端数据层清晰可维护
 
-**代码入口（核心）**
-- Web：`web/components/outcome/OutcomeCapsule.tsx`（顶部“成果”胶囊/列表）、`web/components/outcome/OutcomeDetail.tsx`（成果详情/报告）、`web/components/outcome/InlineOutcomeCreate.tsx`（消息底部“新建成果”）、`web/app/app/workspace/ChatMessageBubble.tsx`（成果入口挂载）、`web/app/app/workspace/TreeCanvas.tsx`（成果路径高亮）
-- API：`api/routes/keyframes.js`（批注存储）、`api/routes/tree_outcomes.js`（成果 v2 CRUD + 生成/再生成）、`api/lib/outcome/*`（报告生成器与可溯源约束）、`api/db/migrations/20260105_keyframe_tables.sql` + `api/db/migrations/20260119_t93_2_outcomes.sql`
-- 设计文档：`docs/t93_layer2_outcomes.md`（Layer2 收敛与验收）
+前端不是零散地在组件里直接 fetch，而是采用统一的数据访问约定：
 
-### Layer 3：高密度的资产层（Assets / Knowledge Base via WeKnora）
+- TanStack Query 负责查询缓存、失效与异步状态管理。
+- 统一 Client 封装在 `web/lib/app-api-client.ts`，集中处理路径规范化、JSON/FormData 请求体、错误建模和鉴权凭据。
+- 业务 API 再按领域拆成模块化 Hooks，例如树、设置、模型配置、指标、分享等，降低页面组件复杂度。
 
-**目标**：把可复用的“经验”系统性整合为知识库，支持检索、管理、复用与团队协作。当前已完成 WeKnora 的引入与整合：用户可上传资料到知识库，并在提问时选择知识库/文件进行检索增强（RAG）。
+这种组织方式更适合持续演进的产品，而不是一次性 Demo。
 
-**代码入口（核心）**
-- Web：`web/app/app/workspace/KnowledgePanel.tsx`（知识库管理/上传/检索预览）、`web/components/composer/KnowledgeMentionPicker.tsx`（输入框 @ 选择知识库/文件）、`web/app/app/workspace/ChatPane.tsx`（提问时注入 knowledge 参数）
-- API：`api/routes/knowledge/index.js`（WeKnora 反向代理：知识库/文档 CRUD + 上传 + 检索）、`api/services/knowledge/search_service.js`（混合检索与 citation 组装）、`api/routes/turn.js` + `api/services/turn/create.js`（将检索结果注入 LLM 提示词）、`api/db/migrations/20260130_p0_workspaces.sql`（workspace 与 weknora 租户/密钥）
-- Service：`services/weknora/`（WeKnora 服务源码）、`docker/compose.yaml`（qdrant + weknora + docreader 依赖编排）
+### 5. 生产式开发工作流
 
-> Layer2→Layer3 衔接已就位：成果可一键同步到"成果资产库"（知识库面板置顶展示），用户在对话时**手动选择**该库即可召回相关成果。不做自动召回——保持用户控制权。
+这个仓库默认以 PM2 生产模式运行，而不是依赖 `next dev` / `nodemon` 进行日常开发。Web 与 API 都围绕真实部署形态组织，支持零停机 reload，更贴近长期运行环境。
 
----
+### 6. 可观测性与运维意识较完整
 
-Layer2 ↔ Layer3 的衔接设计（成果入库/资产化）另见：`docs/L2_L3_INTEGRATION_MEMO.md`。
+项目内置了较完整的指标、日志和诊断能力，包括 Prometheus 指标、统一 metrics 路由、追踪中间件、热重载脚本与 Docker 一键编排，不是只关注功能实现而忽视运行质量。
 
-## ✨ 核心特性
+## Product Capabilities
 
-| 特性 | 描述 |
-|------|------|
-| 🌲 **树状知识结构** | 以树形结构组织问答对，支持无限深度分支 |
-| 🤖 **AI 智能问答** | 多模型支持（GPT-4、Gemini、DeepSeek 等），上下文感知对话 |
-| 🔀 **智能分支** | AI 建议替代问题，一键分叉探索不同思路 |
-| 🖍️ **批注 / 关键帧（Keyframes）** | 对任意节点添加批注，沉淀“我认为重要的证据/逻辑” |
-| 🏁 **成果 / 成果报告（Outcomes）** | 以节点为锚点一键生成成果报告，强调过程可溯源（段落携带 sources） |
-| 📚 **知识库（WeKnora）** | 上传资料到知识库，提问时选择知识库/文件做检索增强（RAG） |
-| 📸 **时间快照** | 保存树的状态，随时回溯历史版本 |
-| 🔗 **知识分享** | 生成分享链接，协作探索知识 |
-| 📊 **可观测性** | Prometheus 指标、完整日志、性能追踪 |
+| Capability | Description |
+| --- | --- |
+| Tree-based exploration | 围绕任意节点持续分叉，保留完整探索路径 |
+| AI-assisted branching | 支持多模型问答与分支式继续追问 |
+| Keyframes / annotations | 对关键节点做批注，沉淀证据与判断 |
+| Outcome reports | 生成带来源路径的阶段性成果报告 |
+| Knowledge-base integration | 通过 WeKnora + Qdrant + docreader 支持知识库上传、检索与 RAG |
+| Snapshots and sharing | 支持时间快照、分享与协作浏览 |
+| Multi-model support | 支持平台模型、BYOK 与 Ollama |
+| Observability | 内置 tracing、metrics、日志与运维脚本 |
 
----
+## Architecture
 
-## 🏗️ 技术架构
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                        用户浏览器                              │
-└──────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────┐
-│   Web (Next.js 16 + React 19)          Port: 3000            │
-│   ├── App Router                                              │
-│   ├── 树状可视化 (TreeCanvas)                                 │
-│   ├── NextAuth 认证                                           │
-│   └── OpenAPI 类型生成                                        │
-└──────────────────────────────────────────────────────────────┘
-                              │ Next.js Rewrites
-                              ▼
-┌──────────────────────────────────────────────────────────────┐
-│   API (Express 5 + Node.js 20)         Port: 8000            │
-│   ├── 树引擎核心 (CRUD, 分支, 快照)                           │
-│   ├── LLM 服务 (多模型, 流式响应)                             │
-│   ├── Layer2 成果 (Keyframes + Outcomes)                      │
-│   ├── Layer3 知识库 (WeKnora Proxy / RAG)                     │
-│   ├── 事件总线 (实时同步)                                     │
-│   └── 限流 & 配额管理                                         │
-└──────────────────────────────────────────────────────────────┘
-                    ┌───────────────┴────────────────┐
-                    ▼                                ▼
-┌──────────────────────────────────────────────────────────────┐
-│   PostgreSQL (oMyTree)                 Port: 5432            │
-│   ├── trees, nodes, turns (对话树/分叉)                      │
-│   ├── keyframes, outcomes (策展/成果)                        │
-│   └── users, sessions, workspaces... (认证/租户)             │
-└──────────────────────────────────────────────────────────────┘
-┌──────────────────────────────────────────────────────────────┐
-│   WeKnora (Knowledge Base)            Port: 8081             │
-│   ├── Qdrant (向量检索)                                       │
-│   └── docreader (文档解析/切分)                               │
-└──────────────────────────────────────────────────────────────┘
+```text
+Browser
+  -> Web (Next.js 16 + React 19)
+  -> API (Express 5 + Node.js 20)
+  -> PostgreSQL / Redis
+  -> Knowledge services (WeKnora + Qdrant + docreader)
 ```
 
-**数据流**:
-- 核心对话树：浏览器 → Web (Next.js) → API (Express) → PostgreSQL(oMyTree)
-- 知识库：浏览器 → Web (Next.js) → API (Express) → WeKnora（→ Qdrant/docreader）
+### Frontend
 
----
+- Next.js 16 App Router
+- React 19
+- TanStack Query 作为统一数据请求缓存层
+- 统一 API client + 模块化 hooks
+- OpenAPI 类型生成，减少前后端契约漂移
 
-## 🚀 快速开始
+### Backend
 
-### Docker（推荐，开箱即用）
+- Express 5 + Node.js 20，ESM-only
+- 路由工厂模式，集中在 `api/index.js` 装配
+- PostgreSQL 连接池复用，避免 ad-hoc client
+- Redis 用于限流与配额等实时控制链路
 
-完整指南见：
-- [docs/DOCKER_QUICKSTART.md](docs/DOCKER_QUICKSTART.md)
+### Knowledge Layer
 
-一键启动（会拉起 Postgres / Redis / Qdrant / WeKnora / docreader / API / Web）：
+- 知识库后端基于腾讯开源 WeKnora
+- Qdrant 负责向量检索
+- docreader 负责文档解析、切分与预处理
+- oMyTree API 在此之上提供工作区、租户、检索注入与引用组装
+
+## Quick Start
+
+### Option A: Docker
+
+完整说明见 [docs/DOCKER_QUICKSTART.md](docs/DOCKER_QUICKSTART.md)。
 
 ```bash
 sudo docker compose -f docker/compose.yaml up -d --build
-```
-
-首次启动（全新数据库）建议执行一次主业务迁移：
-
-```bash
 sudo docker compose -f docker/compose.yaml exec api node scripts/run_migrations.mjs
 ```
 
-如果服务器未安装 compose 插件（`docker compose` 不可用），可改用纯 docker 脚本：
+服务默认地址：
 
-```bash
-bash scripts/docker/up.sh
-```
-
-启动后访问：
 - Web: http://localhost:3000
 - API: http://localhost:8000
-- WeKnora: http://localhost:8081/health
+- WeKnora health: http://localhost:8081/health
 
-### 环境要求
+### Option B: Manual Setup
 
-| 依赖 | 版本 | 安装检查 |
-|------|------|----------|
-| Node.js | 20+ | `node --version` |
-| pnpm | 9+ | `pnpm --version` |
-| PostgreSQL | 14+ | `psql --version` |
-| PM2 | 最新 | `pm2 --version` |
-| Redis | 6+ | `redis-cli ping` |
-
-### 从零开始搭建
-
-#### 1. 克隆项目
+#### 1. Clone
 
 ```bash
 git clone https://github.com/isbeingto/oMyTree.git /srv/oMyTree
 cd /srv/oMyTree
 ```
 
-#### 2. 安装依赖
+#### 2. Install dependencies
 
 ```bash
-# 启用 pnpm
 corepack enable
-
-# 安装所有依赖
 pnpm install --frozen-lockfile
 ```
 
-#### 3. 配置数据库
+#### 3. Prepare PostgreSQL
 
-```bash
-# 以 postgres 用户登录
-sudo -u postgres psql
-
-# 创建数据库和用户
+```sql
 CREATE DATABASE omytree;
 CREATE USER omytree WITH PASSWORD 'your_password_here';
 GRANT ALL PRIVILEGES ON DATABASE omytree TO omytree;
-
-# 连接到数据库
-\c omytree
-
-# 授权 schema
-GRANT ALL PRIVILEGES ON SCHEMA public TO omytree;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO omytree;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO omytree;
-
-# 退出
-\q
 ```
 
-```bash
-# 初始化 oMyTree 主业务表（trees/nodes/turns/keyframes/outcomes/...）
-PG_DSN="postgres://omytree:your_password_here@127.0.0.1:5432/omytree?sslmode=disable" node api/scripts/run_migrations.mjs
+执行主业务迁移：
 
-# （可选）初始化 legacy tree-engine 表（tree_nodes/tree_edges/...，用于少量历史/开发端点）
+```bash
+PG_DSN="postgres://omytree:your_password_here@127.0.0.1:5432/omytree?sslmode=disable" node api/scripts/run_migrations.mjs
+```
+
+如需 legacy tree-engine 表：
+
+```bash
 PGPASSWORD='your_password_here' psql -U omytree -h 127.0.0.1 -d omytree -f database/sql/init_pg.sql
 ```
 
-> 如需执行数据库层的重命名/授权步骤，请参考 [database/sql/20260122_brand_rename_omytree.sql](database/sql/20260122_brand_rename_omytree.sql)。
-
-#### 4. 配置环境变量
+#### 4. Configure services
 
 ```bash
 cp ecosystem.config.example.js ecosystem.config.js
 ```
 
-编辑 `ecosystem.config.js`，将所有 `CHANGE_ME_*` 占位符替换为你的实际配置：
+然后根据实际环境填写数据库、认证、模型、支付、邮件与 WeKnora 相关配置。
 
-```javascript
-// PostgreSQL 连接
-PG_DSN: "postgres://omytree:your_password_here@127.0.0.1:5432/omytree?sslmode=disable",
-PGPASSWORD: "your_password_here",
-
-// LLM API Key
-OPENAI_API_KEY: "sk-xxx",
-
-// 站点 URL (开发环境可用 localhost)
-NEXTAUTH_URL: "http://localhost:3000",
-APP_PUBLIC_URL: "http://localhost:3000",
-```
-
-#### 5. 生成类型 & 构建
+#### 5. Generate types and build web
 
 ```bash
-# 生成 OpenAPI TypeScript 类型
 pnpm --filter omytree-web run gen:types
-
-# 构建 Web 应用
 pnpm --filter omytree-web run build
 ```
 
-### 运行服务
+#### 6. Start with PM2
 
 ```bash
-# 启动所有服务 (API + Web)
 pm2 start ecosystem.config.js
-
-# 查看状态
 pm2 list
-
-# 查看日志
-pm2 logs omytree-web --lines 30
-pm2 logs omytree-api --lines 30
 ```
 
-**访问应用**: 
-- 本地: http://localhost:3000
-- 生产: https://www.omytree.com
+## Development Workflow
 
----
-
-## 💻 开发指南
-
-### 开发工作流
-
-⚠️ **重要**: 本项目使用 **PM2 生产模式** 开发，**不支持** `npm run dev`
+本仓库的日常工作流以 PM2 生产模式为主。
 
 ```bash
-# 🔄 Web 代码修改后 (必须执行)
 pnpm --filter omytree-web run build && pm2 reload omytree-web
-
-# 🔄 API 代码修改后
 pm2 reload omytree-api
-
-# 🔄 OpenAPI 规范修改后
 pnpm --filter omytree-web run gen:types
-pnpm --filter omytree-web run build && pm2 reload omytree-web
-
-# 📜 一键便捷脚本
-bash scripts/deploy/hot-reload.sh web   # Web 更新
-bash scripts/deploy/hot-reload.sh api   # API 更新
-bash scripts/deploy/hot-reload.sh all   # 全部更新
 ```
 
-**零停机热更新**: PM2 集群模式运行 2 个实例，`reload` 命令会先启动新实例，就绪后才关闭旧实例，用户无感知。
-
-### 项目结构
-
-```
-/srv/oMyTree/
-├── api/                          # 🔧 后端 API 服务
-│   ├── index.js                 # 入口文件
-│   ├── routes/                  # API 路由 (Factory Pattern)
-│   ├── services/                # 业务逻辑
-│   │   ├── tree/               # 树引擎核心
-│   │   ├── llm/                # LLM 服务
-│   │   └── turn/               # 对话轮次
-│   ├── lib/                     # 工具库
-│   │   ├── errors.js           # 统一错误处理
-│   │   ├── auth_user.js        # 用户认证
-│   │   └── metrics_*.js        # 指标格式化
-│   ├── db/                      # 数据库迁移
-│   └── tests/                   # 测试文件
-│
-├── web/                          # 🌐 前端应用
-│   ├── app/                     # Next.js App Router
-│   │   ├── app/                # 主应用页面
-│   │   ├── auth/               # 认证页面
-│   │   └── api/                # Next.js API Routes
-│   ├── components/              # React 组件
-│   ├── lib/                     # 工具和类型
-│   │   ├── auth.ts             # NextAuth 配置
-│   │   └── types/              # TypeScript 类型
-│   ├── openapi/                 # API 契约
-│   │   └── openapi.yaml        # OpenAPI 规范 (单一真相源)
-│   └── config/                  # 配置
-│       └── features.json       # Feature Flags
-│
-├── database/                     # 💾 数据库
-│   └── sql/                     # Schema 和迁移脚本
-│
-├── scripts/                      # 🔧 运维和工具脚本
-│   ├── deploy/                  # 部署脚本 (热更新、集群)
-│   ├── docker/                  # Docker 编排
-│   ├── dev/                     # 开发工具
-│   ├── maintenance/             # 维护脚本 (日志轮转、数据清理)
-│   └── diagnostics/             # 诊断工具
-│
-├── docs/                         # 📚 项目文档
-│   ├── adr/                     # 架构决策记录
-│   ├── specs/                   # 技术规范
-│   ├── runbooks/                # 运维手册
-│   └── ios-app/                 # iOS 客户端文档
-│
-├── infra/                        # 🏗️ 基础设施
-│   └── backup/                  # 数据库备份 (git-ignored)
-│
-├── services/                     # 🔌 微服务
-│   └── weknora/                 # 知识库引擎 (Go + Python)
-│       ├── scripts/             # 服务特有脚本 (构建、迁移、开发)
-│       └── docreader/           # PDF/文档解析服务
-│
-├── tests/                        # 🧪 端到端测试
-│   └── e2e/                     # Playwright E2E 测试
-│
-├── ecosystem.config.example.js    # ⚙️ PM2 配置模板 (复制后填入你的密钥)
-└── README.md                     # 📖 本文件
-```
-
-### 常用命令
+便捷脚本：
 
 ```bash
-# === PM2 管理 ===
-pm2 list                              # 查看所有进程状态
-pm2 logs omytree-web --lines 50       # Web 日志
-pm2 logs omytree-api --lines 50       # API 日志
-pm2 reload omytree-web                # 零停机重载 Web
-pm2 reload omytree-api                # 零停机重载 API
-pm2 restart all                       # 重启所有服务
-
-# === 开发构建 ===
-pnpm --filter omytree-web run build   # 构建 Web
-pnpm --filter omytree-web run gen:types # 生成 OpenAPI 类型
-pnpm --filter omytree-web exec tsc --noEmit  # TypeScript 检查
-
-# === 测试 ===
-cd api && pnpm test                   # 运行 API 测试
-pnpm test:e2e                         # 端到端测试 (Playwright)
-
-# === 数据库 ===
-PGPASSWORD='xxx' psql -U omytree -h 127.0.0.1 -d omytree
+bash scripts/deploy/hot-reload.sh web
+bash scripts/deploy/hot-reload.sh api
+bash scripts/deploy/hot-reload.sh all
 ```
 
----
+## Project Structure
 
-## ⚙️ 配置说明
-
-### 环境变量
-
-复制 `ecosystem.config.example.js` 为 `ecosystem.config.js` 并填写你的配置。
-
-| 变量 | 必需 | 说明 | 示例 |
-|------|------|------|------|
-| `PG_DSN` | ✅ | PostgreSQL 连接串 | `postgres://omytree:xxx@127.0.0.1:5432/omytree` |
-| `PGUSER` | ✅ | 数据库用户 | `omytree` |
-| `PGPASSWORD` | ✅ | 数据库密码 | - |
-| `PGDATABASE` | ✅ | 数据库名 | `omytree` |
-| `OPENAI_API_KEY` | ⭕ | OpenAI API Key | `sk-xxx` |
-| `NEXTAUTH_URL` | ✅ | NextAuth 回调 URL | `https://www.omytree.com` |
-| `NEXTAUTH_SECRET` | ✅ | NextAuth 加密密钥 | 32+ 字符随机串 |
-| `API_PROXY_TARGET` | ✅ | API 代理地址 | `http://127.0.0.1:8000` |
-| `ACCEPT_DEV_ENDPOINTS` | ⭕ | 启用开发端点 | `1` (仅开发环境) |
-
-### 数据库配置
-
-```sql
--- 推荐的 PostgreSQL 配置
-ALTER SYSTEM SET max_connections = 100;
-ALTER SYSTEM SET shared_buffers = '256MB';
-ALTER SYSTEM SET effective_cache_size = '768MB';
+```text
+api/                 Express API, route factories, services, migrations, tests
+web/                 Next.js app, UI components, API client, hooks, OpenAPI types
+services/weknora/    Embedded WeKnora service source
+database/sql/        SQL bootstrap and migration scripts
+docker/              Docker images and compose stack
+scripts/             Deployment, maintenance and diagnostics scripts
+docs/                Navigation, specs, integration memos and operational docs
 ```
 
-**数据库迁移**: 新迁移脚本放在 `database/sql/` 目录下，以日期开头命名 (如 `20260122_xxx.sql`)。
-
----
-
-## 🧪 测试与验证
+## Testing
 
 ```bash
-# API 单元测试 (Vitest)
 pnpm --filter omytree-api test
-
-# Web 单元测试 (Vitest)
 pnpm --filter omytree-web test
-
-# 端到端测试 (Playwright)
 pnpm test:e2e
 ```
 
-**开发端点** (需 `ACCEPT_DEV_ENDPOINTS=1`):
+## Documentation
 
-| 端点 | 用途 |
-|------|------|
-| `POST /api/tree/reset` | 清空演示数据 |
-| `POST /api/tree/seed` | 加载演示数据 |
-| `GET /readyz` | 就绪探针 |
-| `GET /metrics` | Prometheus 指标 |
+- Docker 快速开始：[docs/DOCKER_QUICKSTART.md](docs/DOCKER_QUICKSTART.md)
+- Layer2 / Layer3 衔接说明：[docs/L2_L3_INTEGRATION_MEMO.md](docs/L2_L3_INTEGRATION_MEMO.md)
+- Layer2 成果机制：[docs/t93_layer2_outcomes.md](docs/t93_layer2_outcomes.md)
+- 产品定位与功能概览：[docs/PRODUCT_POSITIONING_AND_FEATURES_2026-02-21.md](docs/PRODUCT_POSITIONING_AND_FEATURES_2026-02-21.md)
+- Copilot 协作约定：[.github/copilot-instructions.md](.github/copilot-instructions.md)
+- API 契约：[web/openapi/openapi.yaml](web/openapi/openapi.yaml)
+- 运维脚本说明：[scripts/README.md](scripts/README.md)
 
-更多脚本说明: [scripts/README.md](scripts/README.md)
+## Open Source Notes
 
----
+- `ecosystem.config.js` 不纳入版本控制；请从 `ecosystem.config.example.js` 复制生成。
+- 数据库备份、私有密钥和本地环境配置均不应提交。
+- 如果你计划进行二次部署，建议优先检查鉴权、支付、邮件、对象存储和知识库相关配置。
 
-## 📚 文档导航
+## Troubleshooting
 
-| 需求 | 文档 |
-|------|------|
-| **快速入门** | [本文件](#-快速开始) |
-| **Docker 一键启动** | [docs/DOCKER_QUICKSTART.md](docs/DOCKER_QUICKSTART.md) |
-| **Layer2↔Layer3 衔接** | [docs/L2_L3_INTEGRATION_MEMO.md](docs/L2_L3_INTEGRATION_MEMO.md) |
-| **架构决策记录** | [docs/adr/](docs/adr/) |
-| **运维手册** | [docs/runbooks/](docs/runbooks/) |
-| **API 契约** | [web/openapi/openapi.yaml](web/openapi/openapi.yaml) |
-| **贡献指南** | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| Problem | Fix |
+| --- | --- |
+| Web 代码修改后未生效 | 先执行 `pnpm --filter omytree-web run build`，再 `pm2 reload omytree-web` |
+| OpenAPI 类型过期 | 执行 `pnpm --filter omytree-web run gen:types` |
+| PM2 进程不存在 | 执行 `pm2 start ecosystem.config.js` |
+| 数据库连接失败 | 检查 `PG_DSN`、`PGUSER`、`PGPASSWORD` 和数据库授权 |
+| Redis 连接失败 | 检查 Redis 是否启动并确认连接地址 |
 
----
+## License
 
-## 🆘 故障排除
-
-| 问题 | 解决方案 |
-|------|----------|
-| **Web 修改后没生效** | 必须运行 `pnpm --filter omytree-web run build` 后再 `pm2 reload` |
-| **TypeScript 类型错误** | 运行 `pnpm --filter omytree-web run gen:types` |
-| **端口被占用** | `ss -tlnp \| grep 3000` 或 `lsof -i :3000` 检查占用 |
-| **数据库连接失败** | 检查 `ecosystem.config.js` 中的 `PG_DSN` 配置 |
-| **PM2 进程找不到** | 运行 `pm2 start ecosystem.config.js` |
-| **权限错误** | `rm -rf web/.next && pnpm --filter omytree-web run build` |
-| **Redis 连接失败** | 检查 Redis 服务: `redis-cli ping` |
-
-**查看详细日志**:
-```bash
-pm2 logs omytree-api --err --lines 100   # API 错误日志
-pm2 logs omytree-web --err --lines 100   # Web 错误日志
-```
-
----
-
-## 📄 许可证
-
-MIT License - 详见 [LICENSE](LICENSE)
-
----
-
-<div align="center">
-
-**Made with 💚 by oMyTree Team**
-
-[在线体验](https://www.omytree.com) · [问题反馈](https://github.com/isbeingto/oMyTree/issues) · [文档](docs/)
-
-</div>
+MIT. See [LICENSE](LICENSE).
